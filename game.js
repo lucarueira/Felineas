@@ -164,6 +164,8 @@ export function initGame() {
 
     // Start Loop
     if(gameInterval) clearInterval(gameInterval);
+    let autosaveCounter = 0;
+
     gameInterval = setInterval(() => {
         if (document.getElementById('game-dashboard').style.display === 'block' || document.getElementById('game-dashboard').style.display === 'grid') {
             // Use committed population for generation, with a minimum 0.1 multiplier if building is level 0
@@ -183,6 +185,13 @@ export function initGame() {
             
             updateResourceUI();
             updateStatsUI(fishRate, woodRate, woolRate, mineRate, goldRate);
+            
+            // Autosave a cada 10 segundos
+            autosaveCounter++;
+            if (autosaveCounter >= 10) {
+                saveState();
+                autosaveCounter = 0;
+            }
         }
     }, 1000);
 

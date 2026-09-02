@@ -79,18 +79,17 @@ export async function loadState(uid) {
 }
 
 export async function saveState() {
+    if (!currentUserUid) return;
     try {
-        const user = auth.currentUser;
-        if (user) {
-            await setDoc(doc(db, "villages", user.uid), state);
-        }
+        await setDoc(doc(db, "villages", currentUserUid), state);
     } catch(e) {
         console.log("Erro ao salvar na nuvem: ", e);
     }
     
     // Fallback: Always save to localStorage as backup
-    const user = auth.currentUser;
-    if (user) {
-        localStorage.setItem(`felineas_backup_${user.uid}`, JSON.stringify(state));
+    try {
+        localStorage.setItem(`felineas_backup_${currentUserUid}`, JSON.stringify(state));
+    } catch(e) {
+        console.log("Erro ao salvar localmente:", e);
     }
 }
