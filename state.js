@@ -36,13 +36,12 @@ export function setGMState() {
 
 export async function loadState(uid) {
     currentUserUid = uid;
+    let loadedFromCloud = false;
     try {
         const docRef = doc(db, "villages", uid);
         const docSnap = await getDoc(docRef);
-
         if (docSnap.exists()) {
             const savedState = docSnap.data();
-            state = { ...DEFAULT_STATE, ...savedState };
             state.resources = { ...DEFAULT_STATE.resources, ...(savedState.resources || {}) };
             state.buildings = { ...DEFAULT_STATE.buildings, ...(savedState.buildings || {}) };
             state.pop = { ...DEFAULT_STATE.pop, ...(savedState.pop || {}) };
@@ -50,23 +49,48 @@ export async function loadState(uid) {
             state.tempPop = JSON.parse(JSON.stringify(state.pop));
             state.missions = { ...DEFAULT_STATE.missions, ...(savedState.missions || {}) };
             console.log("Vila carregada da nuvem!");
-        } else {
-            await saveState();
-            console.log("Nova vila criada na nuvem!");
+            loadedFromCloud = true;
         }
-    } catch (e) {
-        console.warn("Aviso: O Banco de Dados (Firestore) ainda não está configurado corretamente no Firebase Console. Usando memória local temporariamente.", e);
-        // Fallback to memory
+    } catch(e) {
+        console.log("Erro ao acessar nuvem (permissão?). Tentando local...", e);
+    }
+
+    if (!loadedFromCloud) {
+        const localData = localStorage.getItem(`felineas_backup_${uid}`);
+        if (localData) {
+            try {
+                const savedState = JSON.parse(localData);
+                state.resources = { ...DEFAULT_STATE.resources, ...(savedState.resources || {}) };
+                state.buildings = { ...DEFAULT_STATE.buildings, ...(savedState.buildings || {}) };
+                state.pop = { ...DEFAULT_STATE.pop, ...(savedState.pop || {}) };
+                state.tempPop = JSON.parse(JSON.stringify(state.pop));
+                state.missions = { ...DEFAULT_STATE.missions, ...(savedState.missions || {}) };
+                console.log("Vila carregada do LocalStorage!");
+            } catch(e) {
+                console.log("Erro ao fazer parse do backup local.");
+                resetState();
+            }
+        } else {
+            console.log("Nenhum save encontrado. Iniciando vila do zero.");
+            resetState();
+        }
     }
     return state;
 }
 
 export async function saveState() {
-    if (!currentUserUid) return;
     try {
-        const docRef = doc(db, "villages", currentUserUid);
-        await setDoc(docRef, state);
-    } catch (e) {
-        console.warn("Aviso: Falha ao salvar no banco de dados. Progresso salvo apenas na memória.", e);
+        const user = auth.currentUser;
+        if (user) {
+            await setDoc(doc(db, "villages", user.uid), state);
+        }
+    } catch(e) {
+        console.log("Erro ao salvar na nuvem: ", e);
+    }
+    
+    // Fallback: Always save to localStorage as backup
+    const user = auth.currentUser;
+    if (user) {
+        localStorage.setItem(`felineas_backup_${user.uid}`, JSON.stringify(state));
     }
 }

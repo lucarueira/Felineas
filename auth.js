@@ -1,4 +1,4 @@
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
 import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
 import { auth, db } from './firebase-config.js';
 import { resetState, setGMState, loadState } from './state.js';
@@ -14,12 +14,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const catEmailInput = document.getElementById('cat-email');
     const catSecretInput = document.getElementById('cat-secret');
 
-    // UI elements to toggle
     const topNav = document.querySelector('.top-nav');
     const leftPanel = document.querySelector('.left-panel');
     const loginScreen = document.getElementById('login-screen');
     const gameDashboard = document.getElementById('game-dashboard');
     const gmNewsBtn = document.getElementById('btn-gm-news');
+
+    // Global UI Elements
+    const musicToggle = document.getElementById('music-toggle');
+    const bgMusic = document.getElementById('bg-music');
 
     // News Elements
     const loginNewsBox = document.getElementById('login-news-box');
@@ -67,26 +70,27 @@ document.addEventListener('DOMContentLoaded', () => {
             
             let name = user.displayName || 'Guerreiro(a)';
             
+            // Stop music in game
+            if (bgMusic) {
+                bgMusic.pause();
+                if(musicToggle) musicToggle.textContent = '🔈';
+            }
+
+            // Update UI for Game Mode
+            document.body.classList.add('in-game');
+            loginScreen.style.display = 'none';
+            if(topNav) topNav.style.display = 'none';
+            if(leftPanel) leftPanel.style.display = 'none';
+            gameDashboard.style.display = 'grid';
+
+            // Check if GM
             if (user.email === 'gm@felineas.com') {
-                name = '👑 DEUS GM';
                 setGMState();
                 if(gmNewsBtn) gmNewsBtn.style.display = 'inline-block';
             } else {
                 if(gmNewsBtn) gmNewsBtn.style.display = 'none';
             }
-            
-            document.getElementById('welcome-message').textContent = `Comandante ${name}`;
-            
-            // Switch UI
-            loginScreen.style.display = 'none';
-            if(topNav) topNav.style.display = 'none';
-            if(leftPanel) leftPanel.style.display = 'none';
-            
-            // Set game background
-            document.body.classList.add('in-game');
 
-            gameDashboard.style.display = 'grid';
-            
             // Start the game loop and render initial UI
             initGame();
 
@@ -94,6 +98,16 @@ document.addEventListener('DOMContentLoaded', () => {
             // Clear memory
             stopGame();
             resetState();
+
+            // Try to play music on login screen
+            if (bgMusic) {
+                // Autoplay may be blocked, so we catch the error
+                bgMusic.play().then(() => {
+                    if(musicToggle) musicToggle.textContent = '🔊';
+                }).catch(e => {
+                    console.log("Autoplay bloqueado pelo navegador. Usuário precisa clicar.");
+                });
+            }
 
             // Switch UI back to login
             gameDashboard.style.display = 'none';
@@ -103,6 +117,26 @@ document.addEventListener('DOMContentLoaded', () => {
             if(leftPanel) leftPanel.style.display = 'block';
         }
     });
+
+    // Handle Forgot Password
+    const forgotPwdBtn = document.querySelector('.forgot-password');
+    if (forgotPwdBtn) {
+        forgotPwdBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const email = catEmailInput.value;
+            if (!email) {
+                showError("Digite seu e-mail no campo acima para redefinir o segredo.");
+                return;
+            }
+            sendPasswordResetEmail(auth, email)
+                .then(() => {
+                    alert("E-mail de redefinição de segredo enviado para " + email);
+                })
+                .catch((error) => {
+                    showError("Erro ao redefinir segredo: " + error.message);
+                });
+        });
+    }
 
     if (loginForm) {
         loginForm.addEventListener('submit', (e) => {
@@ -213,7 +247,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 alert("Notícia publicada com sucesso!");
                 modalGmNews.style.display = 'none';
             } catch (e) {
-                alert("Erro ao publicar notícia: " + e.message);
+                alert("Erro ao publicar notícia: " + e.message + "\n\n(Aviso: Certifique-se de que as Regras de Segurança do Firestore estão configuradas para 'allow read, write: if true;' durante a fase de testes!)");
             }
             
             btnSaveNews.textContent = originalBtn;
@@ -230,4 +264,37 @@ document.addEventListener('DOMContentLoaded', () => {
         leftEar.style.transform = `rotate(${-15 + (x * 10)}deg) skewX(20deg)`;
         rightEar.style.transform = `rotate(${15 + (x * 10)}deg) skewX(-20deg)`;
     });
+
+    // Global Dark Mode Toggle
+    const darkModeToggle = document.getElementById('dark-mode-toggle');
+    if (darkModeToggle) {
+        darkModeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+            darkModeToggle.textContent = document.body.classList.contains('dark-mode') ? '☀️' : '🌙';
+        });
+    }
+
+    // Global Music Player Toggle
+    if (musicToggle && bgMusic) {
+        bgMusic.volume = 0.3;
+        musicToggle.addEventListener('click', () => {
+            if (bgMusic.paused) {
+                bgMusic.play();
+                musicToggle.textContent = '🔊';
+            } else {
+                bgMusic.pause();
+                musicToggle.textContent = '🔈';
+            }
+        });
+        
+        // One-time click anywhere to start music if not playing on login
+        document.body.addEventListener('click', function playMusicOnce() {
+            if (!document.body.classList.contains('in-game') && bgMusic.paused) {
+                bgMusic.play().then(() => {
+                    if(musicToggle) musicToggle.textContent = '🔊';
+                }).catch(e => {});
+            }
+            document.body.removeEventListener('click', playMusicOnce);
+        }, { once: true });
+    }
 });

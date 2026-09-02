@@ -15,12 +15,27 @@
     --font-heading: 'Merienda', cursive;
     --font-body: 'Nunito', sans-serif;
     
-    /* Effects */
+    --danger: #d32f2f;
     --shadow-soft: 0 4px 6px rgba(0,0,0,0.1);
-    --shadow-hard: 0 8px 16px rgba(0,0,0,0.3);
+    --shadow-strong: 0 10px 25px rgba(0,0,0,0.2);
+    --border-radius: 12px;
     --border-radius-sm: 8px;
     --border-radius-md: 12px;
     --border-radius-lg: 20px;
+}
+
+body.dark-mode {
+    --parchment-bg: #252525;
+    --parchment-border: #444444;
+    --wood-light: #555555;
+    --wood-dark: #d4af37;
+    --wood-accent: #333333;
+    --text-primary: #e0e0e0;
+    --text-secondary: #aaaaaa;
+    --gold: #f4d03f;
+    --gold-hover: #f1c40f;
+    --parchment-light: #1a1a1a;
+    --parchment-dark: #1f1f1f;
 }
 
 * {
@@ -507,8 +522,11 @@ body.in-game .game-container {
 }
 
 .locked-card {
+    display: none !important; /* Hide if requirements not met */
+}
+
+.lvl0-card {
     filter: grayscale(100%) opacity(0.7);
-    pointer-events: none; /* Disable interaction */
 }
 
 .building-icon {
@@ -574,6 +592,23 @@ body.in-game .game-container {
     background-color: rgba(0,0,0,0.05);
     padding: 10px;
     border-radius: var(--border-radius-sm);
+}
+
+.worker-type {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--parchment-dark);
+    padding: 10px 15px;
+    border-radius: var(--border-radius-sm);
+    border: 1px solid var(--parchment-border);
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.worker-type > span {
+    font-weight: bold;
+    color: var(--wood-dark);
+    font-size: 1.1rem;
 }
 
 .capacity {

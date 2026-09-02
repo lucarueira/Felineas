@@ -9,16 +9,29 @@ export function initGame() {
     const tabVillage = document.getElementById('tab-village');
     const tabMap = document.getElementById('tab-map');
     const tabMissions = document.getElementById('tab-missions');
+    const tabStats = document.getElementById('tab-stats');
+    const tabPrefeitura = document.getElementById('tab-prefeitura');
+    const tabQuartel = document.getElementById('tab-quartel');
+    const tabMercado = document.getElementById('tab-mercado');
+
     const viewVillage = document.getElementById('village-view');
     const viewMap = document.getElementById('map-view');
     const viewMissions = document.getElementById('missions-view');
+    const viewStats = document.getElementById('stats-view');
+    const viewPrefeitura = document.getElementById('view-prefeitura');
+    const viewQuartel = document.getElementById('view-quartel');
+    const viewMercado = document.getElementById('view-mercado');
 
     function switchTab(activeTab, activeView) {
-        document.querySelectorAll('.game-nav a').forEach(a => a.classList.remove('active'));
+        document.querySelectorAll('.left-panel ul li a').forEach(a => a.classList.remove('active'));
         activeTab.classList.add('active');
         viewVillage.style.display = 'none';
         viewMap.style.display = 'none';
         viewMissions.style.display = 'none';
+        if(viewStats) viewStats.style.display = 'none';
+        if(viewPrefeitura) viewPrefeitura.style.display = 'none';
+        if(viewQuartel) viewQuartel.style.display = 'none';
+        if(viewMercado) viewMercado.style.display = 'none';
         activeView.style.display = 'block';
     }
 
@@ -26,6 +39,10 @@ export function initGame() {
         tabVillage.onclick = (e) => { e.preventDefault(); switchTab(tabVillage, viewVillage); };
         tabMap.onclick = (e) => { e.preventDefault(); switchTab(tabMap, viewMap); };
         tabMissions.onclick = (e) => { e.preventDefault(); switchTab(tabMissions, viewMissions); };
+        if(tabStats) tabStats.onclick = (e) => { e.preventDefault(); switchTab(tabStats, viewStats); };
+        if(tabPrefeitura) tabPrefeitura.onclick = (e) => { e.preventDefault(); switchTab(tabPrefeitura, viewPrefeitura); };
+        if(tabQuartel) tabQuartel.onclick = (e) => { e.preventDefault(); switchTab(tabQuartel, viewQuartel); };
+        if(tabMercado) tabMercado.onclick = (e) => { e.preventDefault(); switchTab(tabMercado, viewMercado); };
     }
 
     // Set up allocators
@@ -109,6 +126,8 @@ export function initGame() {
                         if(buildingKey === 'cabana') {
                             state.pop.max += 5;
                             state.pop.idle += 5;
+                            state.tempPop.max += 5;
+                            state.tempPop.idle += 5;
                         }
 
                         const cardInfo = newBtn.closest('.building-info');
@@ -163,6 +182,7 @@ export function initGame() {
             state.resources.gold += goldRate;
             
             updateResourceUI();
+            updateStatsUI(fishRate, woodRate, woolRate, mineRate, goldRate);
         }
     }, 1000);
 
@@ -268,11 +288,41 @@ export function updateResourceUI() {
 
 function checkUnlocks() {
     const state = getState();
-    if (state.buildings.cabana >= 2) document.getElementById('card-cais').classList.remove('locked-card');
-    if (state.buildings.cais >= 2) document.getElementById('card-arranhador').classList.remove('locked-card');
-    if (state.buildings.cabana >= 3) document.getElementById('card-mina').classList.remove('locked-card');
-    if (state.buildings.cabana >= 4) document.getElementById('card-mercado').classList.remove('locked-card');
-    if (state.buildings.cabana >= 4 && state.buildings.cais >= 3) document.getElementById('card-quartel').classList.remove('locked-card');
+    
+    // Helper function to manage card state
+    const updateCardState = (cardId, unlockCondition, levelCondition) => {
+        const card = document.getElementById(cardId);
+        if (!card) return;
+        
+        if (unlockCondition) {
+            card.classList.remove('locked-card');
+            if (levelCondition) {
+                card.classList.remove('lvl0-card');
+            } else {
+                card.classList.add('lvl0-card');
+            }
+        } else {
+            card.classList.add('locked-card');
+        }
+    };
+
+    updateCardState('card-cais', state.buildings.cabana >= 2, state.buildings.cais >= 1);
+    updateCardState('card-arranhador', state.buildings.cais >= 2, state.buildings.arranhador >= 1);
+    updateCardState('card-mina', state.buildings.cabana >= 3, state.buildings.mina >= 1);
+    updateCardState('card-mercado', state.buildings.cabana >= 4, state.buildings.mercado >= 1);
+    updateCardState('card-quartel', state.buildings.cabana >= 4 && state.buildings.cais >= 3, state.buildings.quartel >= 1);
+    
+    // Prefeitura is always unlocked, but grey if level 0
+    updateCardState('card-prefeitura', true, state.buildings.prefeitura >= 1);
+    
+    // Manage Left Panel Nav items
+    const navPrefeitura = document.getElementById('nav-prefeitura');
+    const navQuartel = document.getElementById('nav-quartel');
+    const navMercado = document.getElementById('nav-mercado');
+    
+    if (navPrefeitura) navPrefeitura.style.display = state.buildings.prefeitura >= 1 ? 'block' : 'none';
+    if (navQuartel) navQuartel.style.display = state.buildings.quartel >= 1 ? 'block' : 'none';
+    if (navMercado) navMercado.style.display = state.buildings.mercado >= 1 ? 'block' : 'none';
     
     if (state.buildings.quartel >= 1 && state.pop.scouts === 0) {
         state.pop.scouts = 15;
@@ -343,4 +393,18 @@ function checkMissions() {
         state.missions.quartelLvl1.ready = true; changed = true;
     }
     if(changed) renderMissions();
+}
+
+export function updateStatsUI(fish, wood, wool, mine, gold) {
+    const elFish = document.getElementById('stat-fish');
+    const elWood = document.getElementById('stat-wood');
+    const elWool = document.getElementById('stat-wool');
+    const elMine = document.getElementById('stat-mine');
+    const elGold = document.getElementById('stat-gold');
+    
+    if (elFish) elFish.textContent = `+${fish.toFixed(1)}`;
+    if (elWood) elWood.textContent = `+${wood.toFixed(1)}`;
+    if (elWool) elWool.textContent = `+${wool.toFixed(1)}`;
+    if (elMine) elMine.textContent = `+${mine.toFixed(1)}`;
+    if (elGold) elGold.textContent = `+${gold.toFixed(1)}`;
 }

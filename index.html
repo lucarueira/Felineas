@@ -14,13 +14,20 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <audio id="bg-music" src="kattans dans.mp3" loop></audio>
     <div class="game-container">
         <!-- Top Navigation -->
         <nav class="top-nav parchment-panel shadow-pop">
-            <ul>
-                <li><a href="#">Notícias</a></li>
-                <li><a href="#">Guias</a></li>
-                <li><a href="#">Comunidade</a></li>
+            <ul style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                <div style="display: flex; gap: 15px;">
+                    <li><a href="#">Notícias</a></li>
+                    <li><a href="#">Guias</a></li>
+                    <li><a href="#">Comunidade</a></li>
+                </div>
+                <li>
+                    <button id="music-toggle" class="btn" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; margin-right: 5px;" title="Tocar/Pausar Música">🔈</button>
+                    <button id="dark-mode-toggle" class="btn" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;" title="Modo Escuro">🌙</button>
+                </li>
             </ul>
         </nav>
 
@@ -157,6 +164,10 @@
                     <li><a href="#" id="tab-village" class="active">🏘️ Minha Vila</a></li>
                     <li><a href="#" id="tab-map">🗺️ Mapa-Múndi</a></li>
                     <li><a href="#" id="tab-missions">📜 Missões <span class="badge" id="mission-badge" style="display:none;">!</span></a></li>
+                    <li><a href="#" id="tab-stats">📊 Estatísticas</a></li>
+                    <li id="nav-prefeitura" style="display:none;"><a href="#" id="tab-prefeitura">🏛️ Prefeitura</a></li>
+                    <li id="nav-quartel" style="display:none;"><a href="#" id="tab-quartel">🐈‍⬛ Quartel Felino</a></li>
+                    <li id="nav-mercado" style="display:none;"><a href="#" id="tab-mercado">🏪 Mercado</a></li>
                 </ul>
                 <div style="margin-top: auto; display: flex; flex-direction: column; gap: 10px;">
                     <button type="button" id="btn-gm-news" class="btn primary-btn" style="width: 100%; padding: 8px; display: none;">✍️ Postar Notícia (GM)</button>
@@ -167,7 +178,7 @@
             <!-- Main Village Area -->
             <section id="village-view" class="village-area parchment-panel">
                 <div class="village-header">
-                    <h2>Vila Principal</h2>
+                    <h2 style="font-size: 2.5rem; color: var(--wood-dark); margin-bottom: 10px; border-bottom: 2px solid var(--parchment-border); padding-bottom: 5px;">Vila de Felineas</h2>
                     <p>Expanda suas construções para dominar as Terras Felineas.</p>
                 </div>
 
@@ -284,7 +295,70 @@
                 </div>
             </section>
 
-            <!-- Right Population Panel -->
+            <!-- Stats View -->
+            <section id="stats-view" class="village-area parchment-panel" style="display: none;">
+                <div class="village-header">
+                    <h2>Estatísticas do Reino</h2>
+                    <p>Monitore a produção por segundo (p/s) e otimize sua economia.</p>
+                </div>
+                <div class="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; margin-top: 20px;">
+                    <div class="stat-card" style="background: var(--parchment-dark); padding: 15px; border-radius: var(--border-radius-sm); text-align: center; border: 1px solid var(--parchment-border);">
+                        <h4 style="color: var(--text-secondary); margin-bottom: 5px;">🐟 Peixes p/s</h4>
+                        <p id="stat-fish" style="color: var(--wood-dark); font-size: 1.5rem; font-weight: bold;">0.0</p>
+                    </div>
+                    <div class="stat-card" style="background: var(--parchment-dark); padding: 15px; border-radius: var(--border-radius-sm); text-align: center; border: 1px solid var(--parchment-border);">
+                        <h4 style="color: var(--text-secondary); margin-bottom: 5px;">🪵 Madeira p/s</h4>
+                        <p id="stat-wood" style="color: var(--wood-dark); font-size: 1.5rem; font-weight: bold;">0.0</p>
+                    </div>
+                    <div class="stat-card" style="background: var(--parchment-dark); padding: 15px; border-radius: var(--border-radius-sm); text-align: center; border: 1px solid var(--parchment-border);">
+                        <h4 style="color: var(--text-secondary); margin-bottom: 5px;">🧶 Lã p/s</h4>
+                        <p id="stat-wool" style="color: var(--wood-dark); font-size: 1.5rem; font-weight: bold;">0.0</p>
+                    </div>
+                    <div class="stat-card" style="background: var(--parchment-dark); padding: 15px; border-radius: var(--border-radius-sm); text-align: center; border: 1px solid var(--parchment-border);">
+                        <h4 style="color: var(--text-secondary); margin-bottom: 5px;">⛏️ Minérios p/s</h4>
+                        <p id="stat-mine" style="color: var(--wood-dark); font-size: 1.5rem; font-weight: bold;">0.0</p>
+                    </div>
+                    <div class="stat-card" style="background: var(--parchment-dark); padding: 15px; border-radius: var(--border-radius-sm); text-align: center; border: 1px solid var(--parchment-border);">
+                        <h4 style="color: var(--text-secondary); margin-bottom: 5px;">🪙 Ouro p/s</h4>
+                        <p id="stat-gold" style="color: var(--wood-dark); font-size: 1.5rem; font-weight: bold;">0.0</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Prefeitura View -->
+            <section id="view-prefeitura" class="village-area parchment-panel" style="display: none;">
+                <div class="village-header">
+                    <h2>🏛️ Prefeitura Felinea</h2>
+                    <p>Gerencie as leis da sua tribo e libere melhorias globais.</p>
+                </div>
+                <div style="text-align: center; padding: 40px; color: var(--text-secondary);">
+                    <p>A árvore de talentos estará disponível em breve.</p>
+                </div>
+            </section>
+
+            <!-- Quartel View -->
+            <section id="view-quartel" class="village-area parchment-panel" style="display: none;">
+                <div class="village-header">
+                    <h2>🐈‍⬛ Quartel Felino</h2>
+                    <p>Treine guerreiros e envie expedições para conquistar territórios.</p>
+                </div>
+                <div style="text-align: center; padding: 40px; color: var(--text-secondary);">
+                    <p>O recrutamento de Batedores e Soldados será aberto em breve.</p>
+                </div>
+            </section>
+
+            <!-- Mercado View -->
+            <section id="view-mercado" class="village-area parchment-panel" style="display: none;">
+                <div class="village-header">
+                    <h2>🏪 Mercado</h2>
+                    <p>Troque recursos por Ouro e vice-versa.</p>
+                </div>
+                <div style="text-align: center; padding: 40px; color: var(--text-secondary);">
+                    <p>As rotas comerciais estarão disponíveis em breve.</p>
+                </div>
+            </section>
+
+            <!-- Right Panel: Population & Army -->
             <aside class="army-panel parchment-panel">
                 <h3>População e Exército</h3>
                 
@@ -379,6 +453,9 @@
             </div>
         </div>
 
+        <footer style="text-align: center; margin-top: 20px; padding: 10px; color: var(--text-secondary); font-size: 0.8rem; width: 100%;">
+            Todos os direitos reservados ao Mamute 2026
+        </footer>
     </div>
 
     <!-- Firebase SDKs will be imported inside scripts -->
