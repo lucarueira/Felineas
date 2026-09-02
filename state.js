@@ -3,8 +3,9 @@ import { db } from "./firebase-config.js";
 
 const DEFAULT_STATE = {
     resources: { fish: 200, wood: 200, wool: 0, gold: 0, stone: 0, coal: 0, iron: 0, diamonds: 5 },
-    buildings: { cabana: 1, cais: 0, arranhador: 0, mina: 0, quartel: 0, prefeitura: 0 },
-    pop: { max: 15, idle: 15, fish: 0, wood: 0, wool: 0, mine: 0, scouts: 0 },
+    buildings: { cabana: 1, cais: 0, arranhador: 0, mina: 0, quartel: 0, prefeitura: 0, mercado: 0 },
+    pop: { max: 15, idle: 15, fish: 0, wood: 0, wool: 0, mine: 0, scouts: 0, merchants: 0 },
+    tempPop: { idle: 15, fish: 0, wood: 0, wool: 0, mine: 0, merchants: 0 },
     missions: {
         cabanaLvl2: { done: false, ready: false, desc: "Evolua a Cabana do Líder para o Nível 2", reward: 50, rewardDiamonds: 2 },
         caisLvl1: { done: false, ready: false, desc: "Construa o Cais de Pesca", reward: 100, rewardDiamonds: 3 },
@@ -30,6 +31,7 @@ export function setGMState() {
     state.resources.diamonds = 999999;
     state.pop.max = 100;
     state.pop.idle = 100;
+    state.tempPop.idle = 100;
 }
 
 export async function loadState(uid) {
@@ -44,6 +46,8 @@ export async function loadState(uid) {
             state.resources = { ...DEFAULT_STATE.resources, ...(savedState.resources || {}) };
             state.buildings = { ...DEFAULT_STATE.buildings, ...(savedState.buildings || {}) };
             state.pop = { ...DEFAULT_STATE.pop, ...(savedState.pop || {}) };
+            // Ensure tempPop matches saved pop on load
+            state.tempPop = JSON.parse(JSON.stringify(state.pop));
             state.missions = { ...DEFAULT_STATE.missions, ...(savedState.missions || {}) };
             console.log("Vila carregada da nuvem!");
         } else {
