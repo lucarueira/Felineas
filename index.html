@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terras Felineas - Guerras de Bigode</title>
+    <meta name="description" content="Bem-vindo às Terras Felineas. Escolha sua tribo, construa sua vila e domine o mundo dos gatos.">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Merienda:wght@400;700&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="game-container">
+        <!-- Top Navigation -->
+        <nav class="top-nav parchment-panel shadow-pop">
+            <ul>
+                <li><a href="#">Notícias</a></li>
+                <li><a href="#">Guias</a></li>
+                <li><a href="#">Comunidade</a></li>
+            </ul>
+        </nav>
+
+        <!-- Left Panel: Tribes -->
+        <aside class="left-panel parchment-panel slide-in-left">
+            <h2>Escolha Sua Tribo Felinea</h2>
+            <div class="tribe-list">
+                <div class="tribe-card hover-glow">
+                    <div class="tribe-icon icon-lion">🦁</div>
+                    <div class="tribe-info">
+                        <h3>Os Pata-Dourada</h3>
+                        <p>Disciplinados, leões guerreiros, amam o sol. Robustos e fortes.</p>
+                    </div>
+                </div>
+                <div class="tribe-card hover-glow">
+                    <div class="tribe-icon icon-siamese">🐈</div>
+                    <div class="tribe-info">
+                        <h3>Os Viajantes Lunares</h3>
+                        <p>Ágeis e misteriosos. Siameses noturnos, mestres da furtividade.</p>
+                    </div>
+                </div>
+                <div class="tribe-card hover-glow">
+                    <div class="tribe-icon icon-tabby">🐅</div>
+                    <div class="tribe-info">
+                        <h3>Os Rebeldes do Beco</h3>
+                        <p>Astutos estrategistas. Tabbies espertos e adaptáveis a qualquer ambiente.</p>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Center Login Modal -->
+        <main id="login-screen" class="login-modal parchment-panel scale-in">
+            <div class="cat-ears">
+                <div class="ear left"></div>
+                <div class="ear right"></div>
+            </div>
+            <h1>Bem-vindo às Terras Felineas</h1>
+            
+            <form id="login-form">
+                <div class="input-group">
+                    <label for="cat-name">Nome de Gato:</label>
+                    <div class="input-wrapper">
+                        <span class="input-icon">🐾</span>
+                        <input type="text" id="cat-name" placeholder="Digite seu nome..." required>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="cat-email">E-mail Felineo:</label>
+                    <div class="input-wrapper">
+                        <span class="input-icon">✉️</span>
+                        <input type="email" id="cat-email" placeholder="Seu e-mail..." required>
+                    </div>
+                </div>
+                
+                <div class="input-group">
+                    <label for="cat-secret">Segredo de Ronrom:</label>
+                    <div class="input-wrapper">
+                        <span class="input-icon">🔒</span>
+                        <input type="password" id="cat-secret" placeholder="Sua senha secreta..." required>
+                    </div>
+                </div>
+
+                <div class="checkbox-group">
+                    <input type="checkbox" id="remember-me">
+                    <label for="remember-me">Lembrar de Mim (pelo cheiro)</label>
+                </div>
+                
+                <div class="actions">
+                    <button type="submit" id="btn-login" class="btn primary-btn">Entrar</button>
+                    <button type="button" id="btn-register" class="btn secondary-btn">Cadastrar-se</button>
+                </div>
+                
+                <p id="auth-error" style="color: #d9534f; display: none; font-weight: bold; margin-top: 10px;"></p>
+                
+                <a href="#" class="forgot-password">Esqueceu o Segredo?</a>
+            </form>
+        </main>
+
+        <!-- Game Dashboard (Hidden initially) -->
+        <main id="game-dashboard" class="game-layout" style="display: none;">
+            
+            <!-- Top Resource Bar -->
+            <header class="resource-bar parchment-panel shadow-soft">
+                <div class="resource-item" title="Peixes">
+                    <span class="res-icon">🐟</span>
+                    <span id="res-fish" class="res-value">500</span>
+                    <span class="res-rate">/h</span>
+                </div>
+                <div class="resource-item" title="Madeira">
+                    <span class="res-icon">🪵</span>
+                    <span id="res-wood" class="res-value">300</span>
+                    <span class="res-rate">/h</span>
+                </div>
+                <div class="resource-item" title="Novelão de Lã">
+                    <span class="res-icon">🧶</span>
+                    <span id="res-wool" class="res-value">50</span>
+                    <span class="res-rate">/h</span>
+                </div>
+                <div class="resource-item" title="Ouro">
+                    <span class="res-icon">🪙</span>
+                    <span id="res-gold" class="res-value">10</span>
+                </div>
+                <div class="resource-item" title="Pedra">
+                    <span class="res-icon">🪨</span>
+                    <span id="res-stone" class="res-value">0</span>
+                    <span class="res-rate">/h</span>
+                </div>
+                <div class="resource-item" title="Carvão">
+                    <span class="res-icon">⚫</span>
+                    <span id="res-coal" class="res-value">0</span>
+                    <span class="res-rate">/h</span>
+                </div>
+                <div class="resource-item" title="Ferro">
+                    <span class="res-icon">⛓️</span>
+                    <span id="res-iron" class="res-value">0</span>
+                    <span class="res-rate">/h</span>
+                <div class="resource-item premium" title="Diamantes" style="border-color: var(--gold); background: rgba(212, 175, 55, 0.1);">
+                    <span class="res-icon">💎</span>
+                    <span id="res-diamonds" class="res-value" style="color: var(--gold-hover); font-weight: bold;">0</span>
+                </div>
+            </header>
+
+            <!-- Left Game Nav -->
+            <aside class="game-nav parchment-panel">
+                <h3 id="welcome-message" style="margin-bottom: 15px; font-size: 1.1rem; border-bottom: 1px solid var(--parchment-border); padding-bottom: 10px;">Comandante</h3>
+                <ul>
+                    <li><a href="#" id="tab-village" class="active">🏘️ Minha Vila</a></li>
+                    <li><a href="#" id="tab-map">🗺️ Mapa-Múndi</a></li>
+                    <li><a href="#" id="tab-missions">📜 Missões <span class="badge" id="mission-badge" style="display:none;">!</span></a></li>
+                </ul>
+                <div style="margin-top: auto; display: flex; flex-direction: column; gap: 10px;">
+                    <button type="button" id="btn-gm-news" class="btn primary-btn" style="width: 100%; padding: 8px; display: none;">✍️ Postar Notícia (GM)</button>
+                    <button type="button" id="logout-btn" class="btn secondary-btn" style="width: 100%; padding: 8px;">Sair do Jogo</button>
+                </div>
+            </aside>
+
+            <!-- Main Village Area -->
+            <section id="village-view" class="village-area parchment-panel">
+                <div class="village-header">
+                    <h2>Vila Principal</h2>
+                    <p>Expanda suas construções para dominar as Terras Felineas.</p>
+                </div>
+
+                <div class="building-grid">
+                    <!-- Building Card 1 -->
+                    <div id="card-cabana" class="building-card">
+                        <div class="building-icon">⛺</div>
+                        <div class="building-info">
+                            <h4>Cabana do Líder</h4>
+                            <span class="level">Nível 1</span>
+                            <p>Aumenta a velocidade de construção e o limite de gatos.</p>
+                            <button class="btn primary-btn btn-upgrade" data-cost="200,100" data-building="Cabana">
+                                Evoluir <br><small>🐟 200 | 🪵 100</small>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Building Card 2 -->
+                    <div id="card-cais" class="building-card hidden-card">
+                        <div class="building-icon">🎣</div>
+                        <div class="building-info">
+                            <h4>Cais de Pesca</h4>
+                            <span class="level">Nível 1</span>
+                            <p>Gera Peixes (Comida). Essencial para manter seus guerreiros alimentados.</p>
+                            <button class="btn primary-btn btn-upgrade" data-cost="50,150" data-building="Cais">
+                                Evoluir <br><small>🐟 50 | 🪵 150</small>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Building Card 3 -->
+                    <div id="card-arranhador" class="building-card hidden-card">
+                        <div class="building-icon">🧶</div>
+                        <div class="building-info">
+                            <h4>Arranhador (Tecelões)</h4>
+                            <span class="level">Nível 0</span>
+                            <p>Produz Lã mágica com o trabalho dos Tecelões.</p>
+                            <button class="btn primary-btn btn-upgrade" data-cost="100,200" data-building="Arranhador">
+                                Construir <br><small>🐟 100 | 🪵 200</small>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Building Card 4 -->
+                    <div id="card-mina" class="building-card hidden-card">
+                        <div class="building-icon">⛏️</div>
+                        <div class="building-info">
+                            <h4>Mina Felina</h4>
+                            <span class="level">Nível 0</span>
+                            <p>Permite coletar Pedra, Carvão e Ferro.</p>
+                            <button class="btn primary-btn btn-upgrade" data-cost="300,300" data-building="Mina">
+                                Construir <br><small>🐟 300 | 🪵 300</small>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Building Card 5 -->
+                    <div id="card-quartel" class="building-card hidden-card">
+                        <div class="building-icon">🐈‍⬛</div>
+                        <div class="building-info">
+                            <h4>Quartel Felino</h4>
+                            <span class="level">Nível 0</span>
+                            <p>Treine Batedores para explorar o mapa. Libera 15 Batedores ao construir!</p>
+                            <button class="btn primary-btn btn-upgrade" data-cost="500,500" data-building="Quartel">
+                                Construir <br><small>🐟 500 | 🪵 500</small>
+                            </button>
+                        </div>
+                    </div>
+                    <!-- Building Card 6 (Premium) -->
+                    <div id="card-prefeitura" class="building-card hover-glow">
+                        <div class="building-icon">🏛️</div>
+                        <div class="building-info">
+                            <h4>Prefeitura</h4>
+                            <span class="level">Nível 0</span>
+                            <p>O coração do império. Libera upgrades globais (em breve).</p>
+                            <button class="btn primary-btn btn-upgrade" data-cost-gold="50" data-building="Prefeitura">
+                                Construir <br><small>🪙 50 Ouro</small>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Map View -->
+            <section id="map-view" class="map-area">
+                <div class="map-header">
+                    <h2>Mapa das Terras Felineas</h2>
+                    <p>Explore regiões e ataque tribos inimigas.</p>
+                </div>
+                <!-- Interactive map elements could go here in the future -->
+            </section>
+
+            <!-- Missions View -->
+            <section id="missions-view" class="village-area parchment-panel" style="display: none;">
+                <div class="village-header">
+                    <h2>Mural de Missões</h2>
+                    <p>Complete tarefas para ganhar Ouro.</p>
+                </div>
+                <div class="mission-list" id="mission-container">
+                    <!-- Missions will be injected here via JS -->
+                </div>
+            </section>
+
+            <!-- Right Population Panel -->
+            <aside class="army-panel parchment-panel">
+                <h3>População e Exército</h3>
+                
+                <div class="capacity" style="margin-bottom: 20px;">
+                    <span>Capacidade da Vila:</span>
+                    <div class="progress-bar">
+                        <div class="fill" id="pop-fill" style="width: 100%;"></div>
+                    </div>
+                    <small><span id="val-total-cats">15</span> / <span id="val-max-cats">15</span> Gatos Totais</small>
+                </div>
+
+                <div class="troop-list">
+                    <div class="troop-item" style="background-color: rgba(212,175,55,0.2);">
+                        <span>💤 Ociosos:</span>
+                        <strong id="val-idle">15</strong>
+                    </div>
+                    <div class="worker-controls">
+                        <div class="worker-type" id="work-fish" style="display:none;">
+                            <span title="Pescadores">🐟 <span id="val-fish">0</span></span>
+                            <div class="btn-group">
+                                <button class="btn btn-alloc btn-add" data-role="fish" data-action="add">+</button>
+                            </div>
+                        </div>
+                        <div class="worker-type" id="work-wood" style="display:none;">
+                            <span title="Lenhadores">🪵 <span id="val-wood">0</span></span>
+                            <div class="btn-group">
+                                <button class="btn btn-alloc btn-add" data-role="wood" data-action="add">+</button>
+                            </div>
+                        </div>
+                        <div class="worker-type" id="work-wool" style="display:none;">
+                            <span title="Tecelões">🧶 <span id="val-wool">0</span></span>
+                            <div class="btn-group">
+                                <button class="btn btn-alloc btn-add" data-role="wool" data-action="add">+</button>
+                            </div>
+                        </div>
+                        <div class="worker-type" id="work-mine" style="display:none;">
+                            <span title="Mineiros">⛏️ <span id="val-mine">0</span></span>
+                            <div class="btn-group">
+                                <button class="btn btn-alloc btn-add" data-role="mine" data-action="add">+</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button id="btn-reset-workers" class="btn secondary-btn" style="width: 100%; margin-top: 15px; border-color: var(--gold); color: var(--wood-dark);">
+                        Resetar Trabalhadores <br><small>💎 Custa 10 Diamantes</small>
+                    </button>
+                </div>
+
+                <h4 style="border-bottom: 1px solid var(--parchment-border); margin-top: 15px; margin-bottom: 10px;">Tropas</h4>
+                <div class="troop-item">
+                    <span>🗡️ Batedores:</span>
+                    <strong id="val-scouts">0</strong>
+                </div>
+            </aside>
+
+        </main>
+    </div>
+    <script type="module" src="main.js"></script>
+</body>
+</html>
