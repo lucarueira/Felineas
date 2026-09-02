@@ -1,7 +1,7 @@
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
 import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
 import { auth, db } from './firebase-config.js';
-import { resetState, setGMState, loadState } from './state.js';
+import { resetState, setGMState, loadState, saveState } from './state.js';
 import { initGame, stopGame, updateResourceUI } from './game.js';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -65,10 +65,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     onAuthStateChanged(auth, async (user) => {
         if (user) {
-            // Load state from Firestore
+            // Load state from Firestore (or sync if local)
             await loadState(user.uid);
             
             let name = user.displayName || 'Guerreiro(a)';
+            const welcomeMsg = document.getElementById('welcome-message');
+            if (welcomeMsg) welcomeMsg.textContent = `🐾 Comandante ${name}`;
             
             // Stop music in game
             if (bgMusic) {
@@ -143,9 +145,14 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             hideError();
             
-            const email = catEmailInput.value;
+            const email = catEmailInput.value.trim();
             const password = catSecretInput.value;
             
+            if(!email || !password) {
+                showError("Preencha o e-mail e a senha para entrar.");
+                return;
+            }
+
             const originalText = btnLogin.textContent;
             btnLogin.textContent = 'Afiando garras...';
             btnLogin.disabled = true;
@@ -159,7 +166,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 .catch((error) => {
                     btnLogin.textContent = originalText;
                     btnLogin.disabled = false;
-                    if(error.code === 'auth/invalid-credential') {
+                    if(error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
                         showError("Credenciais inválidas. Verifique seu e-mail e senha.");
                     } else if(error.code === 'auth/invalid-email') {
                         showError("E-mail inválido.");
@@ -175,12 +182,12 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             hideError();
 
-            const name = catNameInput.value;
-            const email = catEmailInput.value;
+            const name = catNameInput.value.trim();
+            const email = catEmailInput.value.trim();
             const password = catSecretInput.value;
 
             if(!name || !email || !password) {
-                showError("Preencha todos os campos para se cadastrar.");
+                showError("Preencha o Nome de Gato, e-mail e senha para se cadastrar.");
                 return;
             }
 
@@ -189,10 +196,12 @@ document.addEventListener('DOMContentLoaded', () => {
             btnRegister.disabled = true;
 
             createUserWithEmailAndPassword(auth, email, password)
-                .then((userCredential) => {
-                    return updateProfile(userCredential.user, {
+                .then(async (userCredential) => {
+                    await updateProfile(userCredential.user, {
                         displayName: name
                     });
+                    const welcomeMsg = document.getElementById('welcome-message');
+                    if (welcomeMsg) welcomeMsg.textContent = `🐾 Comandante ${name}`;
                 })
                 .then(() => {
                     btnRegister.textContent = originalText;
@@ -215,12 +224,35 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const logoutBtn = document.getElementById('logout-btn');
     if (logoutBtn) {
-        logoutBtn.addEventListener('click', () => {
-            signOut(auth).catch((error) => {
+        logoutBtn.addEventListener('click', async () => {
+            const originalText = logoutBtn.textContent;
+            logoutBtn.textContent = 'Salvando...';
+            logoutBtn.disabled = true;
+            try {
+                await saveState();
+            } catch(e) {
+                console.warn("Erro ao salvar antes de deslogar:", e);
+            }
+            signOut(auth).then(() => {
+                logoutBtn.textContent = originalText;
+                logoutBtn.disabled = false;
+            }).catch((error) => {
                 console.error("Erro ao sair:", error);
+                logoutBtn.textContent = originalText;
+                logoutBtn.disabled = false;
             });
         });
     }
+
+    // Salvar estado ao fechar aba ou mudar de visibilidade
+    window.addEventListener('beforeunload', () => {
+        saveState();
+    });
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'hidden') {
+            saveState();
+        }
+    });
 
     // GM News Modal Logic
     if (gmNewsBtn) {

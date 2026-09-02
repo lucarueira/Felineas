@@ -1,5 +1,5 @@
 import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
-import { db } from "./firebase-config.js";
+import { auth, db } from "./firebase-config.js";
 
 const DEFAULT_STATE = {
     resources: { fish: 200, wood: 200, wool: 0, gold: 0, stone: 0, coal: 0, iron: 0, diamonds: 5 },
@@ -45,14 +45,17 @@ export async function loadState(uid) {
             state.resources = { ...DEFAULT_STATE.resources, ...(savedState.resources || {}) };
             state.buildings = { ...DEFAULT_STATE.buildings, ...(savedState.buildings || {}) };
             state.pop = { ...DEFAULT_STATE.pop, ...(savedState.pop || {}) };
-            // Ensure tempPop matches saved pop on load
             state.tempPop = JSON.parse(JSON.stringify(state.pop));
-            state.missions = { ...DEFAULT_STATE.missions, ...(savedState.missions || {}) };
-            console.log("Vila carregada da nuvem!");
+            state.missions = {
+                cabanaLvl2: { ...DEFAULT_STATE.missions.cabanaLvl2, ...(savedState.missions?.cabanaLvl2 || {}) },
+                caisLvl1: { ...DEFAULT_STATE.missions.caisLvl1, ...(savedState.missions?.caisLvl1 || {}) },
+                quartelLvl1: { ...DEFAULT_STATE.missions.quartelLvl1, ...(savedState.missions?.quartelLvl1 || {}) }
+            };
+            console.log("Vila carregada da nuvem para:", uid);
             loadedFromCloud = true;
         }
     } catch(e) {
-        console.log("Erro ao acessar nuvem (permissão?). Tentando local...", e);
+        console.warn("Erro ao acessar Firestore (tentando backup local):", e);
     }
 
     if (!loadedFromCloud) {
@@ -64,32 +67,67 @@ export async function loadState(uid) {
                 state.buildings = { ...DEFAULT_STATE.buildings, ...(savedState.buildings || {}) };
                 state.pop = { ...DEFAULT_STATE.pop, ...(savedState.pop || {}) };
                 state.tempPop = JSON.parse(JSON.stringify(state.pop));
-                state.missions = { ...DEFAULT_STATE.missions, ...(savedState.missions || {}) };
-                console.log("Vila carregada do LocalStorage!");
+                state.missions = {
+                    cabanaLvl2: { ...DEFAULT_STATE.missions.cabanaLvl2, ...(savedState.missions?.cabanaLvl2 || {}) },
+                    caisLvl1: { ...DEFAULT_STATE.missions.caisLvl1, ...(savedState.missions?.caisLvl1 || {}) },
+                    quartelLvl1: { ...DEFAULT_STATE.missions.quartelLvl1, ...(savedState.missions?.quartelLvl1 || {}) }
+                };
+                console.log("Vila carregada do LocalStorage! Sincronizando com a nuvem...");
+                // Sincroniza o backup local para a nuvem
+                await saveState();
             } catch(e) {
-                console.log("Erro ao fazer parse do backup local.");
-                resetState();
+                console.error("Erro ao fazer parse do backup local:", e);
+                state = JSON.parse(JSON.stringify(DEFAULT_STATE));
+                currentUserUid = uid;
+                await saveState();
             }
         } else {
-            console.log("Nenhum save encontrado. Iniciando vila do zero.");
-            resetState();
+            console.log("Nenhum save encontrado para", uid, "- Iniciando nova vila e gravando na nuvem...");
+            state = JSON.parse(JSON.stringify(DEFAULT_STATE));
+            currentUserUid = uid;
+            await saveState();
         }
     }
     return state;
 }
 
 export async function saveState() {
-    if (!currentUserUid) return;
+    const uid = currentUserUid || auth.currentUser?.uid;
+    if (!uid) {
+        console.warn("saveState cancelado: nenhum usuário autenticado.");
+        return;
+    }
+
+    currentUserUid = uid;
+
+    const saveStatus = document.getElementById('save-status');
+    if (saveStatus) {
+        saveStatus.textContent = '☁️ Salvando...';
+        saveStatus.style.opacity = '1';
+    }
+
     try {
-        await setDoc(doc(db, "villages", currentUserUid), state);
+        await setDoc(doc(db, "villages", uid), state);
+        console.log("Vila salva na nuvem com sucesso!");
+        if (saveStatus) {
+            saveStatus.textContent = '☁️ Salvo';
+            setTimeout(() => {
+                if (saveStatus && saveStatus.textContent === '☁️ Salvo') {
+                    saveStatus.style.opacity = '0.7';
+                }
+            }, 1500);
+        }
     } catch(e) {
-        console.log("Erro ao salvar na nuvem: ", e);
+        console.error("Erro ao salvar no Firestore:", e);
+        if (saveStatus) {
+            saveStatus.textContent = '⚠️ Erro na nuvem';
+        }
     }
     
-    // Fallback: Always save to localStorage as backup
+    // Backup no LocalStorage
     try {
-        localStorage.setItem(`felineas_backup_${currentUserUid}`, JSON.stringify(state));
+        localStorage.setItem(`felineas_backup_${uid}`, JSON.stringify(state));
     } catch(e) {
-        console.log("Erro ao salvar localmente:", e);
+        console.warn("Erro ao salvar localmente:", e);
     }
 }

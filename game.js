@@ -104,6 +104,7 @@ export function initGame() {
                 }
                 
                 updateResourceUI();
+                saveState(); // Salva os recursos gastos imediatamente
 
                 newBtn.disabled = true;
                 newBtn.style.backgroundColor = 'var(--parchment-border)';
@@ -148,7 +149,7 @@ export function initGame() {
                         newBtn.style.backgroundColor = '';
                         
                         checkUnlocks();
-                        saveState(); // Save after building completes
+                        saveState(); // Salva após concluir a construção
                     }
                 }, 1000);
             } else {
@@ -186,7 +187,7 @@ export function initGame() {
             updateResourceUI();
             updateStatsUI(fishRate, woodRate, woolRate, mineRate, goldRate);
             
-            // Autosave a cada 10 segundos
+            // Autosave a cada 10 segundos sincronizado com o loop do jogo
             autosaveCounter++;
             if (autosaveCounter >= 10) {
                 saveState();
@@ -194,11 +195,6 @@ export function initGame() {
             }
         }
     }, 1000);
-
-    // Save state every 10 seconds to Firestore
-    setInterval(() => {
-        saveState();
-    }, 10000);
 
     // Worker draft save logic
     const btnSaveContracts = document.getElementById('btn-save-contracts');
