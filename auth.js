@@ -1,5 +1,6 @@
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
-import { auth } from './firebase-config.js';
+import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
+import { auth, db } from './firebase-config.js';
 import { resetState, setGMState, loadState } from './state.js';
 import { initGame, stopGame, updateResourceUI } from './game.js';
 
@@ -19,6 +20,36 @@ document.addEventListener('DOMContentLoaded', () => {
     const loginScreen = document.getElementById('login-screen');
     const gameDashboard = document.getElementById('game-dashboard');
     const gmNewsBtn = document.getElementById('btn-gm-news');
+
+    // News Elements
+    const loginNewsBox = document.getElementById('login-news-box');
+    const loginNewsText = document.getElementById('login-news-text');
+    const modalGmNews = document.getElementById('modal-gm-news');
+    const gmNewsText = document.getElementById('gm-news-text');
+    const btnSaveNews = document.getElementById('btn-save-news');
+    const btnCloseNews = document.getElementById('btn-close-news');
+
+    async function loadNews() {
+        try {
+            const docRef = doc(db, "global", "news");
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                if (data.text) {
+                    loginNewsBox.style.display = 'block';
+                    loginNewsText.innerHTML = data.text.replace(/\n/g, '<br>');
+                } else {
+                    loginNewsBox.style.display = 'none';
+                }
+            } else {
+                loginNewsBox.style.display = 'none';
+            }
+        } catch(e) {
+            console.log("Erro ao carregar notícias (banco não configurado?).");
+        }
+    }
+
+    loadNews();
 
     function showError(message) {
         authError.textContent = message;
@@ -154,6 +185,39 @@ document.addEventListener('DOMContentLoaded', () => {
             signOut(auth).catch((error) => {
                 console.error("Erro ao sair:", error);
             });
+        });
+    }
+
+    // GM News Modal Logic
+    if (gmNewsBtn) {
+        gmNewsBtn.addEventListener('click', () => {
+            modalGmNews.style.display = 'flex';
+        });
+    }
+
+    if (btnCloseNews) {
+        btnCloseNews.addEventListener('click', () => {
+            modalGmNews.style.display = 'none';
+        });
+    }
+
+    if (btnSaveNews) {
+        btnSaveNews.addEventListener('click', async () => {
+            const text = gmNewsText.value;
+            const originalBtn = btnSaveNews.textContent;
+            btnSaveNews.textContent = 'Salvando...';
+            btnSaveNews.disabled = true;
+
+            try {
+                await setDoc(doc(db, "global", "news"), { text: text });
+                alert("Notícia publicada com sucesso!");
+                modalGmNews.style.display = 'none';
+            } catch (e) {
+                alert("Erro ao publicar notícia: " + e.message);
+            }
+            
+            btnSaveNews.textContent = originalBtn;
+            btnSaveNews.disabled = false;
         });
     }
 

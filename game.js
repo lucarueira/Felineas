@@ -38,15 +38,20 @@ export function initGame() {
             const role = newBtn.getAttribute('data-role');
             const action = newBtn.getAttribute('data-action');
 
-            if (action === 'add' && state.pop.idle > 0) {
-                state.pop.idle--;
-                state.pop[role]++;
-            } else if (action === 'sub' && state.pop[role] > 0) {
-                state.pop[role]--;
-                state.pop.idle++;
+            if (action === 'add' && state.tempPop.idle > 0) {
+                state.tempPop.idle--;
+                state.tempPop[role]++;
+            } else if (action === 'sub') {
+                // Can only subtract if the draft role has more cats than the committed role
+                if (state.tempPop[role] > state.pop[role]) {
+                    state.tempPop[role]--;
+                    state.tempPop.idle++;
+                } else if (state.tempPop[role] === state.pop[role]) {
+                    // Show small warning maybe, or just do nothing
+                    console.log("Estes gatos já assinaram contrato e não podem ser removidos!");
+                }
             }
             updateResourceUI();
-            saveState(); // Save on worker allocation
         });
     });
 
@@ -142,10 +147,12 @@ export function initGame() {
     if(gameInterval) clearInterval(gameInterval);
     gameInterval = setInterval(() => {
         if (document.getElementById('game-dashboard').style.display === 'block' || document.getElementById('game-dashboard').style.display === 'grid') {
-            const fishRate = state.pop.fish * Math.max(0.5, state.buildings.cais) * 0.5;
-            const woodRate = state.pop.wood * Math.max(0.5, state.buildings.cabana) * 0.3;
-            const woolRate = state.pop.wool * Math.max(0.5, state.buildings.arranhador) * 0.1;
-            const mineRate = state.pop.mine * Math.max(0.5, state.buildings.mina) * 0.2;
+            // Use committed population for generation, with a minimum 0.1 multiplier if building is level 0
+            const fishRate = state.pop.fish * Math.max(0.1, state.buildings.cais) * 0.5;
+            const woodRate = state.pop.wood * Math.max(0.1, state.buildings.cabana) * 0.3;
+            const woolRate = state.pop.wool * Math.max(0.1, state.buildings.arranhador) * 0.1;
+            const mineRate = state.pop.mine * Math.max(0.1, state.buildings.mina) * 0.2;
+            const goldRate = state.pop.merchants * Math.max(0.1, state.buildings.mercado) * 0.2;
             
             state.resources.fish += fishRate;
             state.resources.wood += woodRate;
@@ -153,6 +160,7 @@ export function initGame() {
             state.resources.stone += mineRate;
             state.resources.coal += (mineRate * 0.5);
             state.resources.iron += (mineRate * 0.2);
+            state.resources.gold += goldRate;
             
             updateResourceUI();
         }
@@ -162,6 +170,32 @@ export function initGame() {
     setInterval(() => {
         saveState();
     }, 10000);
+
+    // Worker draft save logic
+    const btnSaveContracts = document.getElementById('btn-save-contracts');
+    const modalConfirm = document.getElementById('modal-confirm-contracts');
+    
+    if (btnSaveContracts) {
+        btnSaveContracts.onclick = () => {
+            // Check if there are uncommitted changes
+            if (JSON.stringify(state.pop) === JSON.stringify(state.tempPop)) {
+                alert("Nenhuma nova alocação para salvar.");
+                return;
+            }
+            modalConfirm.style.display = 'flex';
+        };
+    }
+    
+    document.getElementById('btn-confirm-contracts').onclick = () => {
+        state.pop = JSON.parse(JSON.stringify(state.tempPop));
+        modalConfirm.style.display = 'none';
+        saveState();
+        updateResourceUI();
+    };
+    
+    document.getElementById('btn-cancel-contracts').onclick = () => {
+        modalConfirm.style.display = 'none';
+    };
 
     // Worker reset logic
     const btnResetWorkers = document.getElementById('btn-reset-workers');
@@ -173,12 +207,16 @@ export function initGame() {
                 state.resources.diamonds -= 10;
                 
                 // Return all to idle
-                let totalWorking = state.pop.fish + state.pop.wood + state.pop.wool + state.pop.mine;
-                state.pop.fish = 0;
-                state.pop.wood = 0;
-                state.pop.wool = 0;
-                state.pop.mine = 0;
-                state.pop.idle += totalWorking;
+                let totalWorking = state.pop.fish + state.pop.wood + state.pop.wool + state.pop.mine + (state.pop.merchants || 0);
+                
+                const clearedPop = {
+                    max: state.pop.max,
+                    idle: state.pop.idle + totalWorking,
+                    fish: 0, wood: 0, wool: 0, mine: 0, scouts: state.pop.scouts, merchants: 0
+                };
+                
+                state.pop = JSON.parse(JSON.stringify(clearedPop));
+                state.tempPop = JSON.parse(JSON.stringify(clearedPop));
                 
                 updateResourceUI();
                 saveState();
@@ -214,34 +252,31 @@ export function updateResourceUI() {
     const diamondEl = document.getElementById('res-diamonds');
     if(diamondEl) diamondEl.textContent = state.resources.diamonds || 0;
     
-    document.getElementById('val-idle').textContent = state.pop.idle;
-    document.getElementById('val-fish').textContent = state.pop.fish;
-    document.getElementById('val-wood').textContent = state.pop.wood;
-    document.getElementById('val-wool').textContent = state.pop.wool;
-    document.getElementById('val-mine').textContent = state.pop.mine;
-    document.getElementById('val-scouts').textContent = state.pop.scouts;
+    document.getElementById('val-idle').textContent = state.tempPop.idle;
+    document.getElementById('val-fish').textContent = state.tempPop.fish;
+    document.getElementById('val-wood').textContent = state.tempPop.wood;
+    document.getElementById('val-wool').textContent = state.tempPop.wool;
+    document.getElementById('val-mine').textContent = state.tempPop.mine;
+    document.getElementById('val-merchants').textContent = state.tempPop.merchants;
+    document.getElementById('val-scouts').textContent = state.tempPop.scouts;
     
-    const totalUsed = state.pop.max - state.pop.idle;
+    const totalUsed = state.tempPop.max - state.tempPop.idle;
     document.getElementById('val-total-cats').textContent = totalUsed;
-    document.getElementById('val-max-cats').textContent = state.pop.max;
-    document.getElementById('pop-fill').style.width = `${(totalUsed / state.pop.max) * 100}%`;
+    document.getElementById('val-max-cats').textContent = state.tempPop.max;
+    document.getElementById('pop-fill').style.width = `${(totalUsed / state.tempPop.max) * 100}%`;
 }
 
 function checkUnlocks() {
     const state = getState();
-    if (state.buildings.cabana >= 2) document.getElementById('card-cais').classList.remove('hidden-card');
-    if (state.buildings.cais >= 1) {
-        document.getElementById('work-fish').style.display = 'flex';
-        document.getElementById('work-wood').style.display = 'flex';
-    }
-    if (state.buildings.cais >= 2) document.getElementById('card-arranhador').classList.remove('hidden-card');
-    if (state.buildings.arranhador >= 1) document.getElementById('work-wool').style.display = 'flex';
-    if (state.buildings.cabana >= 3) document.getElementById('card-mina').classList.remove('hidden-card');
-    if (state.buildings.mina >= 1) document.getElementById('work-mine').style.display = 'flex';
-    if (state.buildings.cabana >= 4 && state.buildings.cais >= 3) document.getElementById('card-quartel').classList.remove('hidden-card');
+    if (state.buildings.cabana >= 2) document.getElementById('card-cais').classList.remove('locked-card');
+    if (state.buildings.cais >= 2) document.getElementById('card-arranhador').classList.remove('locked-card');
+    if (state.buildings.cabana >= 3) document.getElementById('card-mina').classList.remove('locked-card');
+    if (state.buildings.cabana >= 4) document.getElementById('card-mercado').classList.remove('locked-card');
+    if (state.buildings.cabana >= 4 && state.buildings.cais >= 3) document.getElementById('card-quartel').classList.remove('locked-card');
     
     if (state.buildings.quartel >= 1 && state.pop.scouts === 0) {
         state.pop.scouts = 15;
+        state.tempPop.scouts = 15;
     }
     checkMissions();
 }

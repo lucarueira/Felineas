@@ -99,6 +99,11 @@
                 
                 <a href="#" class="forgot-password">Esqueceu o Segredo?</a>
             </form>
+            
+            <div id="login-news-box" class="news-box" style="margin-top: 20px; padding: 15px; border-top: 1px dashed var(--parchment-border); text-align: left; display: none;">
+                <h4 style="color: var(--wood-dark); margin-bottom: 5px;">📜 Notícias do Reino</h4>
+                <p id="login-news-text" style="font-size: 0.9rem; color: var(--text-secondary);">Carregando...</p>
+            </div>
         </main>
 
         <!-- Game Dashboard (Hidden initially) -->
@@ -181,7 +186,7 @@
                     </div>
 
                     <!-- Building Card 2 -->
-                    <div id="card-cais" class="building-card hidden-card">
+                    <div id="card-cais" class="building-card locked-card">
                         <div class="building-icon">🎣</div>
                         <div class="building-info">
                             <h4>Cais de Pesca</h4>
@@ -194,7 +199,7 @@
                     </div>
 
                     <!-- Building Card 3 -->
-                    <div id="card-arranhador" class="building-card hidden-card">
+                    <div id="card-arranhador" class="building-card locked-card">
                         <div class="building-icon">🧶</div>
                         <div class="building-info">
                             <h4>Arranhador (Tecelões)</h4>
@@ -207,7 +212,7 @@
                     </div>
 
                     <!-- Building Card 4 -->
-                    <div id="card-mina" class="building-card hidden-card">
+                    <div id="card-mina" class="building-card locked-card">
                         <div class="building-icon">⛏️</div>
                         <div class="building-info">
                             <h4>Mina Felina</h4>
@@ -220,7 +225,20 @@
                     </div>
 
                     <!-- Building Card 5 -->
-                    <div id="card-quartel" class="building-card hidden-card">
+                    <div id="card-mercado" class="building-card locked-card">
+                        <div class="building-icon">🏪</div>
+                        <div class="building-info">
+                            <h4>Mercado</h4>
+                            <span class="level">Nível 0</span>
+                            <p>Gera Ouro. Transforme seus recursos em riqueza.</p>
+                            <button class="btn primary-btn btn-upgrade" data-cost="0,400" data-building="Mercado">
+                                Construir <br><small>🪵 400 | 🪨 100</small>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Building Card 6 -->
+                    <div id="card-quartel" class="building-card locked-card">
                         <div class="building-icon">🐈‍⬛</div>
                         <div class="building-info">
                             <h4>Quartel Felino</h4>
@@ -231,7 +249,7 @@
                             </button>
                         </div>
                     </div>
-                    <!-- Building Card 6 (Premium) -->
+                    <!-- Building Card 7 (Premium) -->
                     <div id="card-prefeitura" class="building-card hover-glow">
                         <div class="building-icon">🏛️</div>
                         <div class="building-info">
@@ -284,33 +302,48 @@
                         <strong id="val-idle">15</strong>
                     </div>
                     <div class="worker-controls">
-                        <div class="worker-type" id="work-fish" style="display:none;">
+                        <div class="worker-type" id="work-fish">
                             <span title="Pescadores">🐟 <span id="val-fish">0</span></span>
                             <div class="btn-group">
+                                <button class="btn btn-alloc btn-sub" data-role="fish" data-action="sub">-</button>
                                 <button class="btn btn-alloc btn-add" data-role="fish" data-action="add">+</button>
                             </div>
                         </div>
-                        <div class="worker-type" id="work-wood" style="display:none;">
+                        <div class="worker-type" id="work-wood">
                             <span title="Lenhadores">🪵 <span id="val-wood">0</span></span>
                             <div class="btn-group">
+                                <button class="btn btn-alloc btn-sub" data-role="wood" data-action="sub">-</button>
                                 <button class="btn btn-alloc btn-add" data-role="wood" data-action="add">+</button>
                             </div>
                         </div>
-                        <div class="worker-type" id="work-wool" style="display:none;">
+                        <div class="worker-type" id="work-wool">
                             <span title="Tecelões">🧶 <span id="val-wool">0</span></span>
                             <div class="btn-group">
+                                <button class="btn btn-alloc btn-sub" data-role="wool" data-action="sub">-</button>
                                 <button class="btn btn-alloc btn-add" data-role="wool" data-action="add">+</button>
                             </div>
                         </div>
-                        <div class="worker-type" id="work-mine" style="display:none;">
+                        <div class="worker-type" id="work-mine">
                             <span title="Mineiros">⛏️ <span id="val-mine">0</span></span>
                             <div class="btn-group">
+                                <button class="btn btn-alloc btn-sub" data-role="mine" data-action="sub">-</button>
                                 <button class="btn btn-alloc btn-add" data-role="mine" data-action="add">+</button>
+                            </div>
+                        </div>
+                        <div class="worker-type" id="work-merchants">
+                            <span title="Mercadores">💰 <span id="val-merchants">0</span></span>
+                            <div class="btn-group">
+                                <button class="btn btn-alloc btn-sub" data-role="merchants" data-action="sub">-</button>
+                                <button class="btn btn-alloc btn-add" data-role="merchants" data-action="add">+</button>
                             </div>
                         </div>
                     </div>
                     
-                    <button id="btn-reset-workers" class="btn secondary-btn" style="width: 100%; margin-top: 15px; border-color: var(--gold); color: var(--wood-dark);">
+                    <button id="btn-save-contracts" class="btn primary-btn" style="width: 100%; margin-top: 15px; background-color: var(--success);">
+                        💾 Salvar Contratos
+                    </button>
+                    
+                    <button id="btn-reset-workers" class="btn secondary-btn" style="width: 100%; margin-top: 10px; border-color: var(--gold); color: var(--wood-dark);">
                         Resetar Trabalhadores <br><small>💎 Custa 10 Diamantes</small>
                     </button>
                 </div>
@@ -321,9 +354,34 @@
                     <strong id="val-scouts">0</strong>
                 </div>
             </aside>
-
         </main>
+        
+        <!-- Modals -->
+        <div id="modal-confirm-contracts" class="modal-overlay" style="display: none;">
+            <div class="modal-content parchment-panel">
+                <h3>Assinar Contratos</h3>
+                <p>Tem certeza? Após assinar, os gatos escolhidos não poderão mais mudar de profissão. Eles trabalharão nisso para sempre.</p>
+                <div class="actions" style="margin-top: 20px;">
+                    <button id="btn-confirm-contracts" class="btn primary-btn">Sim, Assinar!</button>
+                    <button id="btn-cancel-contracts" class="btn secondary-btn">Cancelar</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="modal-gm-news" class="modal-overlay" style="display: none;">
+            <div class="modal-content parchment-panel">
+                <h3>📢 Bloco de Notas (Notícias)</h3>
+                <textarea id="gm-news-text" rows="5" style="width: 100%; margin: 10px 0; padding: 10px; font-family: 'Nunito'; border: 1px solid var(--parchment-border); border-radius: 5px;"></textarea>
+                <div class="actions">
+                    <button id="btn-save-news" class="btn primary-btn">Publicar</button>
+                    <button id="btn-close-news" class="btn secondary-btn">Fechar</button>
+                </div>
+            </div>
+        </div>
+
     </div>
+
+    <!-- Firebase SDKs will be imported inside scripts -->
     <script type="module" src="main.js"></script>
 </body>
 </html>
