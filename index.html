@@ -117,53 +117,96 @@
         <main id="game-dashboard" class="game-layout" style="display: none;">
             
             <!-- Top Resource Bar -->
+            <!-- Top Resource Bar -->
             <header class="resource-bar parchment-panel shadow-soft">
-                <div class="resource-item" title="Peixes">
-                    <span class="res-icon">🐟</span>
-                    <span id="res-fish" class="res-value">500</span>
-                    <span class="res-rate">/h</span>
+                <!-- Production Resources Group -->
+                <div class="resource-group-production">
+                    <div class="resource-item" title="Peixes">
+                        <span class="res-icon">🐟</span>
+                        <span class="res-name">Peixes</span>
+                        <span id="res-fish" class="res-value">500</span>
+                        <span class="res-rate">/h</span>
+                    </div>
+                    <div class="resource-item" title="Madeira">
+                        <span class="res-icon">🪵</span>
+                        <span class="res-name">Madeira</span>
+                        <span id="res-wood" class="res-value">300</span>
+                        <span class="res-rate">/h</span>
+                    </div>
+                    <div class="resource-item" title="Lã">
+                        <span class="res-icon">🧶</span>
+                        <span class="res-name">Lã</span>
+                        <span id="res-wool" class="res-value">50</span>
+                        <span class="res-rate">/h</span>
+                    </div>
+                    <div class="resource-item" title="Pedra">
+                        <span class="res-icon">🪨</span>
+                        <span class="res-name">Pedra</span>
+                        <span id="res-stone" class="res-value">0</span>
+                        <span class="res-rate">/h</span>
+                    </div>
+                    <div class="resource-item" title="Carvão">
+                        <span class="res-icon">⚫</span>
+                        <span class="res-name">Carvão</span>
+                        <span id="res-coal" class="res-value">0</span>
+                        <span class="res-rate">/h</span>
+                    </div>
+                    <div class="resource-item" title="Ferro">
+                        <span class="res-icon">⛓️</span>
+                        <span class="res-name">Ferro</span>
+                        <span id="res-iron" class="res-value">0</span>
+                        <span class="res-rate">/h</span>
+                    </div>
                 </div>
-                <div class="resource-item" title="Madeira">
-                    <span class="res-icon">🪵</span>
-                    <span id="res-wood" class="res-value">300</span>
-                    <span class="res-rate">/h</span>
+
+                <!-- Royal Treasury Group (Ouro e Diamantes) -->
+                <div class="treasury-group" title="Cofre Real das Terras Felineas">
+                    <div class="resource-item" title="Ouro">
+                        <span class="res-icon">🪙</span>
+                        <span class="res-name">Ouro</span>
+                        <span id="res-gold" class="res-value">10</span>
+                    </div>
+                    <div class="resource-item premium" title="Diamantes">
+                        <span class="res-icon">💎</span>
+                        <span class="res-name">Diamantes</span>
+                        <span id="res-diamonds" class="res-value">0</span>
+                    </div>
                 </div>
-                <div class="resource-item" title="Novelão de Lã">
-                    <span class="res-icon">🧶</span>
-                    <span id="res-wool" class="res-value">50</span>
-                    <span class="res-rate">/h</span>
-                </div>
-                <div class="resource-item" title="Ouro">
-                    <span class="res-icon">🪙</span>
-                    <span id="res-gold" class="res-value">10</span>
-                </div>
-                <div class="resource-item" title="Pedra">
-                    <span class="res-icon">🪨</span>
-                    <span id="res-stone" class="res-value">0</span>
-                    <span class="res-rate">/h</span>
-                </div>
-                <div class="resource-item" title="Carvão">
-                    <span class="res-icon">⚫</span>
-                    <span id="res-coal" class="res-value">0</span>
-                    <span class="res-rate">/h</span>
-                </div>
-                <div class="resource-item" title="Ferro">
-                    <span class="res-icon">⛓️</span>
-                    <span id="res-iron" class="res-value">0</span>
-                    <span class="res-rate">/h</span>
-                </div>
-                <div class="resource-item premium" title="Diamantes" style="border-color: var(--gold); background: rgba(212, 175, 55, 0.1);">
-                    <span class="res-icon">💎</span>
-                    <span id="res-diamonds" class="res-value" style="color: var(--gold-hover); font-weight: bold;">0</span>
-                </div>
-                <div class="resource-item" style="margin-left: auto; border: none; background: none; padding: 2px 8px;">
-                    <span id="save-status" style="font-size: 0.85rem; font-weight: 600; color: var(--wood-dark); opacity: 0.7; transition: opacity 0.3s ease;">☁️ Sincronizado</span>
+
+                <!-- Utility Controls Group (Nuvem, Modo Noturno, Música) -->
+                <div class="game-controls-group">
+                    <span id="save-status" style="font-size: 0.85rem; font-weight: 600; color: var(--wood-dark); opacity: 0.7; transition: opacity 0.3s ease;">☁️ Salvo</span>
+                    <button type="button" id="game-music-toggle" class="control-icon-btn" title="Tocar / Pausar Música">🔈</button>
+                    <button type="button" id="game-dark-mode-toggle" class="control-icon-btn" title="Alternar Modo Claro / Noturno">🌙</button>
                 </div>
             </header>
 
             <!-- Left Game Nav -->
             <aside class="game-nav parchment-panel">
-                <h3 id="welcome-message" style="margin-bottom: 15px; font-size: 1.1rem; border-bottom: 1px solid var(--parchment-border); padding-bottom: 10px;">Comandante</h3>
+                <!-- Commander Profile Card -->
+                <div id="profile-card" class="profile-card" title="Clique para gerenciar seu perfil felino">
+                    <div class="profile-card-header">
+                        <div id="profile-avatar-display" class="profile-avatar-circle">🦁</div>
+                        <div class="profile-header-meta">
+                            <div style="display: flex; align-items: center; gap: 5px;">
+                                <span class="profile-name" id="profile-name-display">Comandante</span>
+                                <span id="profile-level-badge" class="profile-level-badge">Nv. 1</span>
+                            </div>
+                            <span class="profile-title" id="profile-role-display">Líder Felino</span>
+                            <span class="profile-tribe-tag" id="profile-tribe-display">🐾 Pata-Dourada</span>
+                        </div>
+                        <span class="profile-edit-badge" title="Editar Perfil">⚙️</span>
+                    </div>
+                    <div class="profile-xp-container">
+                        <div class="profile-xp-bar-bg">
+                            <div id="profile-xp-fill" class="profile-xp-fill" style="width: 0%;"></div>
+                        </div>
+                        <div class="profile-xp-label">
+                            <span>XP da Conta</span>
+                            <span id="profile-xp-text">0 / 100</span>
+                        </div>
+                    </div>
+                </div>
                 <ul>
                     <li><a href="#" id="tab-village" class="active">🏘️ Minha Vila</a></li>
                     <li><a href="#" id="tab-map">🗺️ Mapa-Múndi</a></li>
@@ -184,6 +227,22 @@
                 <div class="village-header">
                     <h2 style="font-size: 2.5rem; color: var(--wood-dark); margin-bottom: 10px; border-bottom: 2px solid var(--parchment-border); padding-bottom: 5px;">Vila de Felineas</h2>
                     <p>Expanda suas construções para dominar as Terras Felineas.</p>
+                </div>
+
+                <!-- Active Expedition Notification Banner -->
+                <div id="village-expedition-banner" class="village-expedition-banner" style="display: none;">
+                    <div class="expedition-banner-content">
+                        <div class="expedition-banner-info">
+                            <span class="expedition-live-dot"></span>
+                            <strong>🏰 Expedição em Andamento:</strong>
+                            <span id="village-exp-name">Andar 1</span>
+                            <span id="village-exp-timer" class="expedition-timer-pill">⏳ 15s</span>
+                        </div>
+                        <div class="expedition-mini-progress">
+                            <div id="village-exp-fill" class="expedition-mini-fill" style="width: 0%;"></div>
+                        </div>
+                        <button type="button" id="btn-goto-quartel" class="btn secondary-btn" style="padding: 5px 12px; font-size: 0.8rem; margin-left: 10px; white-space: nowrap;">Ver no Quartel ⚔️</button>
+                    </div>
                 </div>
 
                 <div class="building-grid">
@@ -291,40 +350,138 @@
             <!-- Missions View -->
             <section id="missions-view" class="village-area parchment-panel" style="display: none;">
                 <div class="village-header">
-                    <h2>Mural de Missões</h2>
-                    <p>Complete tarefas para ganhar Ouro.</p>
+                    <h2>📜 Mural de Missões e Conquistas</h2>
+                    <p>Cumpra tarefas da vila para ganhar Ouro e evolua o nível da sua conta para conquistar Diamantes!</p>
                 </div>
+
+                <!-- Section 1: Missões da Vila (Apenas Ouro) -->
+                <h3 class="mission-section-title">🪙 Missões da Vila (Recompensas em Ouro)</h3>
                 <div class="mission-list" id="mission-container">
                     <!-- Missions will be injected here via JS -->
+                </div>
+
+                <!-- Section 2: Marcos de Nível de Conta (Apenas Diamantes) -->
+                <h3 class="mission-section-title">💎 Marcos de Nível do Comandante (Recompensas em Diamantes)</h3>
+                <div class="mission-list" id="level-mission-container">
+                    <!-- Level Missions will be injected here via JS -->
                 </div>
             </section>
 
             <!-- Stats View -->
             <section id="stats-view" class="village-area parchment-panel" style="display: none;">
                 <div class="village-header">
-                    <h2>Estatísticas do Reino</h2>
-                    <p>Monitore a produção por segundo (p/s) e otimize sua economia.</p>
+                    <h2>📊 Estatísticas e Economia do Reino</h2>
+                    <p>Monitore a alocação dos felinos, níveis de construções e a produção em tempo real.</p>
                 </div>
-                <div class="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; margin-top: 20px;">
-                    <div class="stat-card" style="background: var(--parchment-dark); padding: 15px; border-radius: var(--border-radius-sm); text-align: center; border: 1px solid var(--parchment-border);">
-                        <h4 style="color: var(--text-secondary); margin-bottom: 5px;">🐟 Peixes p/s</h4>
-                        <p id="stat-fish" style="color: var(--wood-dark); font-size: 1.5rem; font-weight: bold;">0.0</p>
+
+                <!-- Workforce Summary Cards -->
+                <div class="stats-summary-card">
+                    <div style="text-align: center;">
+                        <span style="font-size: 0.85rem; color: var(--text-secondary); font-weight: bold;">POPULAÇÃO TOTAL</span>
+                        <h3 id="stat-summary-total" style="color: var(--wood-dark); font-size: 1.6rem; margin-top: 4px;">15 / 15</h3>
                     </div>
-                    <div class="stat-card" style="background: var(--parchment-dark); padding: 15px; border-radius: var(--border-radius-sm); text-align: center; border: 1px solid var(--parchment-border);">
-                        <h4 style="color: var(--text-secondary); margin-bottom: 5px;">🪵 Madeira p/s</h4>
-                        <p id="stat-wood" style="color: var(--wood-dark); font-size: 1.5rem; font-weight: bold;">0.0</p>
+                    <div style="text-align: center;">
+                        <span style="font-size: 0.85rem; color: var(--text-secondary); font-weight: bold;">GATOS TRABALHANDO</span>
+                        <h3 id="stat-summary-working" style="color: var(--gold-hover); font-size: 1.6rem; margin-top: 4px;">0</h3>
                     </div>
-                    <div class="stat-card" style="background: var(--parchment-dark); padding: 15px; border-radius: var(--border-radius-sm); text-align: center; border: 1px solid var(--parchment-border);">
-                        <h4 style="color: var(--text-secondary); margin-bottom: 5px;">🧶 Lã p/s</h4>
-                        <p id="stat-wool" style="color: var(--wood-dark); font-size: 1.5rem; font-weight: bold;">0.0</p>
+                    <div style="text-align: center;">
+                        <span style="font-size: 0.85rem; color: var(--text-secondary); font-weight: bold;">GATOS OCIOSOS</span>
+                        <h3 id="stat-summary-idle" style="color: var(--success); font-size: 1.6rem; margin-top: 4px;">15</h3>
                     </div>
-                    <div class="stat-card" style="background: var(--parchment-dark); padding: 15px; border-radius: var(--border-radius-sm); text-align: center; border: 1px solid var(--parchment-border);">
-                        <h4 style="color: var(--text-secondary); margin-bottom: 5px;">⛏️ Minérios p/s</h4>
-                        <p id="stat-mine" style="color: var(--wood-dark); font-size: 1.5rem; font-weight: bold;">0.0</p>
-                    </div>
-                    <div class="stat-card" style="background: var(--parchment-dark); padding: 15px; border-radius: var(--border-radius-sm); text-align: center; border: 1px solid var(--parchment-border);">
-                        <h4 style="color: var(--text-secondary); margin-bottom: 5px;">🪙 Ouro p/s</h4>
-                        <p id="stat-gold" style="color: var(--wood-dark); font-size: 1.5rem; font-weight: bold;">0.0</p>
+                </div>
+
+                <!-- Detailed Sector Breakdown Table -->
+                <div class="stats-table-container">
+                    <table class="stats-table">
+                        <thead>
+                            <tr>
+                                <th>Setor Produtivo</th>
+                                <th>Edifício / Nível</th>
+                                <th>Gatos Ativos</th>
+                                <th>Produção / seg</th>
+                                <th>Produção / hora</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>🐟 <strong>Pescaria (Comida)</strong></td>
+                                <td id="stat-bldg-cais">Cais Nível 0</td>
+                                <td><span id="stat-workers-fish" class="worker-pill">🐾 0</span></td>
+                                <td><strong id="stat-fish" style="color: var(--gold-hover);">+0.0</strong> /s</td>
+                                <td id="stat-fish-hour">+0 /h</td>
+                            </tr>
+                            <tr>
+                                <td>🪵 <strong>Silvicultura (Madeira)</strong></td>
+                                <td id="stat-bldg-cabana">Cabana Nível 1</td>
+                                <td><span id="stat-workers-wood" class="worker-pill">🐾 0</span></td>
+                                <td><strong id="stat-wood" style="color: var(--gold-hover);">+0.0</strong> /s</td>
+                                <td id="stat-wood-hour">+0 /h</td>
+                            </tr>
+                            <tr>
+                                <td>🧶 <strong>Tecelagem (Lã Mágica)</strong></td>
+                                <td id="stat-bldg-arranhador">Arranhador Nível 0</td>
+                                <td><span id="stat-workers-wool" class="worker-pill">🐾 0</span></td>
+                                <td><strong id="stat-wool" style="color: var(--gold-hover);">+0.0</strong> /s</td>
+                                <td id="stat-wool-hour">+0 /h</td>
+                            </tr>
+                            <tr>
+                                <td>⛏️ <strong>Mineração (Pedra, Carvão, Ferro)</strong></td>
+                                <td id="stat-bldg-mina">Mina Nível 0</td>
+                                <td><span id="stat-workers-mine" class="worker-pill">🐾 0</span></td>
+                                <td><strong id="stat-mine" style="color: var(--gold-hover);">+0.0</strong> /s</td>
+                                <td id="stat-mine-hour">+0 /h</td>
+                            </tr>
+                            <tr>
+                                <td>🐈‍⬛ <strong>Guarnição Militar</strong></td>
+                                <td id="stat-bldg-quartel">Quartel Nível 0</td>
+                                <td><span id="stat-workers-scouts" class="worker-pill">🗡️ 0 Batedores</span></td>
+                                <td>-</td>
+                                <td>-</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <!-- Military & Tower of Expeditions Stats -->
+                    <div class="stats-table-wrapper" style="margin-top: 24px;">
+                        <h3 style="font-family: var(--font-heading); color: var(--wood-dark); margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                            ⚔️ Registro Militar e da Torre de Expedições
+                        </h3>
+                        <table class="stats-table">
+                            <thead>
+                                <tr>
+                                    <th>Categoria</th>
+                                    <th>Destaque Principal</th>
+                                    <th>Poder / Detalhes</th>
+                                    <th>Desempenho</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>🐾 <strong>Campeão Ativo</strong></td>
+                                    <td id="stat-hero-name">-</td>
+                                    <td><span id="stat-hero-power" class="worker-pill">⚔️ 0 Poder</span></td>
+                                    <td id="stat-hero-level">Nível 1</td>
+                                </tr>
+                                <tr>
+                                    <td>🏰 <strong>Torre de Desafios</strong></td>
+                                    <td id="stat-tower-floor">Andar 1 Desbloqueado</td>
+                                    <td><span id="stat-tower-victories" style="color: #2e7d32; font-weight: bold;">0 Vitórias</span></td>
+                                    <td><span id="stat-tower-defeats" style="color: #c62828; font-weight: bold;">0 Derrotas</span></td>
+                                </tr>
+                                <tr>
+                                    <td>🛡️ <strong>Guarnição Militar</strong></td>
+                                    <td id="stat-army-count">0 Guerreiros</td>
+                                    <td><span id="stat-army-power" class="worker-pill">⚔️ 0 Poder</span></td>
+                                    <td id="stat-army-status">Pronto para Combate</td>
+                                </tr>
+                                <tr>
+                                    <td>🎒 <strong>Equipamentos & Itens</strong></td>
+                                    <td id="stat-equipped-count">0 Equipados</td>
+                                    <td><span id="stat-gear-power" class="worker-pill">✨ +0 Bônus</span></td>
+                                    <td id="stat-inventory-count">0 na Mochila</td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </section>
@@ -343,11 +500,11 @@
             <!-- Quartel View -->
             <section id="view-quartel" class="village-area parchment-panel" style="display: none;">
                 <div class="village-header">
-                    <h2>🐈‍⬛ Quartel Felino</h2>
-                    <p>Treine guerreiros e envie expedições para conquistar territórios.</p>
+                    <h2>🐈‍⬛ Quartel Militar Felino</h2>
+                    <p>Comande seu Herói Guardião, gerencie seu exército de guerreiros e lidere expedições militares.</p>
                 </div>
-                <div style="text-align: center; padding: 40px; color: var(--text-secondary);">
-                    <p>O recrutamento de Batedores e Soldados será aberto em breve.</p>
+                <div id="quartel-content">
+                    <!-- Injected dynamically via JS: Hero Selection Screen OR Hero RPG Sheet + Clash of Clans Army + Expeditions -->
                 </div>
             </section>
 
@@ -408,13 +565,6 @@
                                 <button class="btn btn-alloc btn-add" data-role="mine" data-action="add">+</button>
                             </div>
                         </div>
-                        <div class="worker-type" id="work-merchants">
-                            <span title="Mercadores">💰 <span id="val-merchants">0</span></span>
-                            <div class="btn-group">
-                                <button class="btn btn-alloc btn-sub" data-role="merchants" data-action="sub">-</button>
-                                <button class="btn btn-alloc btn-add" data-role="merchants" data-action="add">+</button>
-                            </div>
-                        </div>
                     </div>
                     
                     <button id="btn-save-contracts" class="btn primary-btn" style="width: 100%; margin-top: 15px; background-color: var(--success);">
@@ -453,6 +603,77 @@
                 <div class="actions">
                     <button id="btn-save-news" class="btn primary-btn">Publicar</button>
                     <button id="btn-close-news" class="btn secondary-btn">Fechar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Commander Profile Modal -->
+        <div id="modal-profile" class="modal-overlay" style="display: none;">
+            <div class="modal-content parchment-panel profile-modal-large">
+                <div class="modal-header-fancy" style="margin-bottom: 16px; border-bottom: 2px solid var(--parchment-border); padding-bottom: 10px;">
+                    <h3 style="font-size: 1.4rem; color: var(--wood-dark);">👑 Perfil do Comandante Felino</h3>
+                    <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 4px;">Personalize sua identidade no reino e gerencie a segurança de acesso.</p>
+                </div>
+                
+                <!-- Avatar Gallery -->
+                <div class="profile-section-block">
+                    <h4>🐾 Foto de Perfil (Avatar Felino)</h4>
+                    <div class="avatar-selection-grid">
+                        <button type="button" class="avatar-option-btn selected" data-avatar="🦁" title="Leão Dourado">🦁</button>
+                        <button type="button" class="avatar-option-btn" data-avatar="🐈" title="Siamês Lunar">🐈</button>
+                        <button type="button" class="avatar-option-btn" data-avatar="🐅" title="Tigre Guerreiro">🐅</button>
+                        <button type="button" class="avatar-option-btn" data-avatar="🧙‍♂️" title="Gato Mago">🧙‍♂️</button>
+                        <button type="button" class="avatar-option-btn" data-avatar="👑" title="Rei dos Bichanos">👑</button>
+                        <button type="button" class="avatar-option-btn" data-avatar="🐾" title="Gato Ninja">🐾</button>
+                    </div>
+                </div>
+
+                <!-- Personal Info -->
+                <div class="profile-section-block">
+                    <h4>🏷️ Dados do Líder</h4>
+                    <div class="input-group" style="margin-bottom: 8px;">
+                        <label for="profile-name-input" style="font-size: 0.85rem; font-weight: bold; color: var(--wood-dark);">Nome de Gato:</label>
+                        <div class="input-wrapper">
+                            <span class="input-icon">🐾</span>
+                            <input type="text" id="profile-name-input" placeholder="Seu nome no reino..." style="padding: 8px 12px 8px 36px;">
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label for="profile-tribe-select" style="font-size: 0.85rem; font-weight: bold; color: var(--wood-dark);">Tribo Felina:</label>
+                        <div class="input-wrapper">
+                            <span class="input-icon">🚩</span>
+                            <select id="profile-tribe-select" style="width: 100%; padding: 8px 12px 8px 36px; border: 2px solid var(--parchment-border); border-radius: var(--border-radius-sm); font-family: var(--font-body); background: var(--parchment-bg); color: var(--text-primary);">
+                                <option value="Pata-Dourada">Os Pata-Dourada (Leões Guerreiros)</option>
+                                <option value="Viajantes Lunares">Os Viajantes Lunares (Siameses Ágeis)</option>
+                                <option value="Rebeldes do Beco">Os Rebeldes do Beco (Astutos Tabbies)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Account Security -->
+                <div class="profile-section-block">
+                    <h4>🔒 Segredo de Ronrom (Alterar Senha)</h4>
+                    <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 8px;">Deixe em branco caso não queira alterar a senha.</p>
+                    <div class="input-group" style="margin-bottom: 8px;">
+                        <div class="input-wrapper">
+                            <span class="input-icon">🔑</span>
+                            <input type="password" id="profile-new-password" placeholder="Nova senha (mínimo 6 dígitos)..." style="padding: 8px 12px 8px 36px;">
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <div class="input-wrapper">
+                            <span class="input-icon">🔒</span>
+                            <input type="password" id="profile-confirm-password" placeholder="Confirme a nova senha..." style="padding: 8px 12px 8px 36px;">
+                        </div>
+                    </div>
+                </div>
+
+                <p id="profile-feedback" style="display: none; font-weight: bold; margin: 10px 0; font-size: 0.9rem;"></p>
+
+                <div class="actions" style="margin-top: 15px;">
+                    <button type="button" id="btn-save-profile" class="btn primary-btn">Salvar Alterações</button>
+                    <button type="button" id="btn-close-profile" class="btn secondary-btn">Fechar</button>
                 </div>
             </div>
         </div>

@@ -1,7 +1,7 @@
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile, updatePassword, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
 import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
 import { auth, db } from './firebase-config.js';
-import { resetState, setGMState, loadState, saveState } from './state.js';
+import { getState, resetState, setGMState, loadState, saveState, updateProfileState } from './state.js';
 import { initGame, stopGame, updateResourceUI } from './game.js';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -22,7 +22,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Global UI Elements
     const musicToggle = document.getElementById('music-toggle');
+    const gameMusicToggle = document.getElementById('game-music-toggle');
     const bgMusic = document.getElementById('bg-music');
+    const darkModeToggle = document.getElementById('dark-mode-toggle');
+    const gameDarkModeToggle = document.getElementById('game-dark-mode-toggle');
 
     // News Elements
     const loginNewsBox = document.getElementById('login-news-box');
@@ -32,6 +35,74 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnSaveNews = document.getElementById('btn-save-news');
     const btnCloseNews = document.getElementById('btn-close-news');
 
+    // Profile Elements
+    const profileCard = document.getElementById('profile-card');
+    const modalProfile = document.getElementById('modal-profile');
+    const btnSaveProfile = document.getElementById('btn-save-profile');
+    const btnCloseProfile = document.getElementById('btn-close-profile');
+    const profileFeedback = document.getElementById('profile-feedback');
+    const profileNameInput = document.getElementById('profile-name-input');
+    const profileTribeSelect = document.getElementById('profile-tribe-select');
+    const profileNewPassword = document.getElementById('profile-new-password');
+    const profileConfirmPassword = document.getElementById('profile-confirm-password');
+
+    let currentSelectedAvatar = '🦁';
+
+    // --- Dark Mode Synchronization ---
+    function syncDarkModeUI() {
+        const isDark = document.body.classList.contains('dark-mode');
+        const icon = isDark ? '☀️' : '🌙';
+        if (darkModeToggle) darkModeToggle.textContent = icon;
+        if (gameDarkModeToggle) gameDarkModeToggle.textContent = icon;
+    }
+
+    function toggleDarkMode() {
+        document.body.classList.toggle('dark-mode');
+        syncDarkModeUI();
+        try {
+            localStorage.setItem('felineas_dark_mode', document.body.classList.contains('dark-mode') ? '1' : '0');
+        } catch(e) {}
+    }
+
+    if (darkModeToggle) darkModeToggle.addEventListener('click', toggleDarkMode);
+    if (gameDarkModeToggle) gameDarkModeToggle.addEventListener('click', toggleDarkMode);
+
+    if (localStorage.getItem('felineas_dark_mode') === '1') {
+        document.body.classList.add('dark-mode');
+        syncDarkModeUI();
+    }
+
+    // --- Music Synchronization ---
+    function syncMusicUI() {
+        if (!bgMusic) return;
+        const icon = bgMusic.paused ? '🔈' : '🔊';
+        if (musicToggle) musicToggle.textContent = icon;
+        if (gameMusicToggle) gameMusicToggle.textContent = icon;
+    }
+
+    function toggleMusic() {
+        if (!bgMusic) return;
+        if (bgMusic.paused) {
+            bgMusic.play().then(() => syncMusicUI()).catch(() => {});
+        } else {
+            bgMusic.pause();
+            syncMusicUI();
+        }
+    }
+
+    if (bgMusic) bgMusic.volume = 0.3;
+    if (musicToggle) musicToggle.addEventListener('click', toggleMusic);
+    if (gameMusicToggle) gameMusicToggle.addEventListener('click', toggleMusic);
+
+    // One-time click anywhere to start music if not playing on login
+    document.body.addEventListener('click', function playMusicOnce() {
+        if (!document.body.classList.contains('in-game') && bgMusic && bgMusic.paused) {
+            bgMusic.play().then(() => syncMusicUI()).catch(e => {});
+        }
+        document.body.removeEventListener('click', playMusicOnce);
+    }, { once: true });
+
+    // --- News Loading ---
     async function loadNews() {
         try {
             const docRef = doc(db, "global", "news");
@@ -63,19 +134,46 @@ document.addEventListener('DOMContentLoaded', () => {
         authError.style.display = 'none';
     }
 
+    // --- Profile Card UI Update ---
+    function updateProfileCardUI(user) {
+        const state = getState();
+        const avatar = state.profile?.avatar || '🦁';
+        const name = user?.displayName || 'Comandante';
+        const tribe = state.profile?.tribe || 'Pata-Dourada';
+        const role = state.profile?.title || 'Líder da Vila';
+
+        const elAvatar = document.getElementById('profile-avatar-display');
+        const elName = document.getElementById('profile-name-display');
+        const elTribe = document.getElementById('profile-tribe-display');
+        const elRole = document.getElementById('profile-role-display');
+
+        if (elAvatar) elAvatar.textContent = avatar;
+        if (elName) elName.textContent = name;
+        if (elTribe) elTribe.textContent = `🐾 ${tribe}`;
+        if (elRole) elRole.textContent = role;
+
+        const elLevel = document.getElementById('profile-level-badge');
+        const elFill = document.getElementById('profile-xp-fill');
+        const elText = document.getElementById('profile-xp-text');
+        if (elLevel && state.account) elLevel.textContent = `Nv. ${state.account.level}`;
+        if (elText && state.account) elText.textContent = `${state.account.xp} / ${state.account.xpToNextLevel}`;
+        if (elFill && state.account) {
+            const pct = Math.min(100, Math.max(0, (state.account.xp / state.account.xpToNextLevel) * 100));
+            elFill.style.width = `${pct}%`;
+        }
+    }
+
     onAuthStateChanged(auth, async (user) => {
         if (user) {
             // Load state from Firestore (or sync if local)
             await loadState(user.uid);
             
-            let name = user.displayName || 'Guerreiro(a)';
-            const welcomeMsg = document.getElementById('welcome-message');
-            if (welcomeMsg) welcomeMsg.textContent = `🐾 Comandante ${name}`;
-            
+            updateProfileCardUI(user);
+
             // Stop music in game
             if (bgMusic) {
                 bgMusic.pause();
-                if(musicToggle) musicToggle.textContent = '🔈';
+                syncMusicUI();
             }
 
             // Update UI for Game Mode
@@ -103,10 +201,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Try to play music on login screen
             if (bgMusic) {
-                // Autoplay may be blocked, so we catch the error
-                bgMusic.play().then(() => {
-                    if(musicToggle) musicToggle.textContent = '🔊';
-                }).catch(e => {
+                bgMusic.play().then(() => syncMusicUI()).catch(e => {
                     console.log("Autoplay bloqueado pelo navegador. Usuário precisa clicar.");
                 });
             }
@@ -119,6 +214,119 @@ document.addEventListener('DOMContentLoaded', () => {
             if(leftPanel) leftPanel.style.display = 'block';
         }
     });
+
+    // --- Profile Modal Handling ---
+    document.querySelectorAll('.avatar-option-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.avatar-option-btn').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+            currentSelectedAvatar = btn.getAttribute('data-avatar');
+        });
+    });
+
+    if (profileCard && modalProfile) {
+        profileCard.addEventListener('click', () => {
+            const user = auth.currentUser;
+            const state = getState();
+            if (profileNameInput) profileNameInput.value = user?.displayName || '';
+            if (profileTribeSelect && state.profile?.tribe) {
+                profileTribeSelect.value = state.profile.tribe;
+            }
+            currentSelectedAvatar = state.profile?.avatar || '🦁';
+            document.querySelectorAll('.avatar-option-btn').forEach(btn => {
+                btn.classList.toggle('selected', btn.getAttribute('data-avatar') === currentSelectedAvatar);
+            });
+            if (profileNewPassword) profileNewPassword.value = '';
+            if (profileConfirmPassword) profileConfirmPassword.value = '';
+            if (profileFeedback) profileFeedback.style.display = 'none';
+
+            modalProfile.style.display = 'flex';
+        });
+    }
+
+    if (btnCloseProfile && modalProfile) {
+        btnCloseProfile.addEventListener('click', () => {
+            modalProfile.style.display = 'none';
+        });
+    }
+
+    if (btnSaveProfile) {
+        btnSaveProfile.addEventListener('click', async () => {
+            const user = auth.currentUser;
+            if (!user) return;
+
+            const newName = profileNameInput ? profileNameInput.value.trim() : '';
+            const newTribe = profileTribeSelect ? profileTribeSelect.value : 'Pata-Dourada';
+            const newPass = profileNewPassword ? profileNewPassword.value : '';
+            const confirmPass = profileConfirmPassword ? profileConfirmPassword.value : '';
+
+            btnSaveProfile.disabled = true;
+            btnSaveProfile.textContent = 'Salvando...';
+
+            function showProfileFeedback(msg, isSuccess = false) {
+                if (!profileFeedback) return;
+                profileFeedback.textContent = msg;
+                profileFeedback.style.color = isSuccess ? 'var(--success)' : '#d9534f';
+                profileFeedback.style.display = 'block';
+            }
+
+            try {
+                // 1. Update Display Name if changed
+                if (newName && newName !== user.displayName) {
+                    await updateProfile(user, { displayName: newName });
+                }
+
+                // 2. Update Password if provided
+                if (newPass) {
+                    if (newPass.length < 6) {
+                        showProfileFeedback("A nova senha deve ter pelo menos 6 caracteres.");
+                        btnSaveProfile.disabled = false;
+                        btnSaveProfile.textContent = 'Salvar Alterações';
+                        return;
+                    }
+                    if (newPass !== confirmPass) {
+                        showProfileFeedback("As senhas não coincidem. Digite a mesma senha em ambos os campos.");
+                        btnSaveProfile.disabled = false;
+                        btnSaveProfile.textContent = 'Salvar Alterações';
+                        return;
+                    }
+                    try {
+                        await updatePassword(user, newPass);
+                    } catch(passErr) {
+                        if (passErr.code === 'auth/requires-recent-login') {
+                            showProfileFeedback("Por segurança, saia e faça login novamente para alterar a senha.");
+                            btnSaveProfile.disabled = false;
+                            btnSaveProfile.textContent = 'Salvar Alterações';
+                            return;
+                        } else {
+                            throw passErr;
+                        }
+                    }
+                }
+
+                // 3. Update Profile state in Firestore
+                updateProfileState({
+                    avatar: currentSelectedAvatar,
+                    tribe: newTribe
+                });
+
+                updateProfileCardUI(user);
+                showProfileFeedback("Perfil atualizado com sucesso! 🐾", true);
+
+                setTimeout(() => {
+                    if (modalProfile) modalProfile.style.display = 'none';
+                    btnSaveProfile.disabled = false;
+                    btnSaveProfile.textContent = 'Salvar Alterações';
+                }, 1000);
+
+            } catch(err) {
+                console.error("Erro ao salvar perfil:", err);
+                showProfileFeedback("Erro ao atualizar perfil: " + err.message);
+                btnSaveProfile.disabled = false;
+                btnSaveProfile.textContent = 'Salvar Alterações';
+            }
+        });
+    }
 
     // Handle Forgot Password
     const forgotPwdBtn = document.querySelector('.forgot-password');
@@ -200,8 +408,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     await updateProfile(userCredential.user, {
                         displayName: name
                     });
-                    const welcomeMsg = document.getElementById('welcome-message');
-                    if (welcomeMsg) welcomeMsg.textContent = `🐾 Comandante ${name}`;
+                    updateProfileCardUI(userCredential.user);
                 })
                 .then(() => {
                     btnRegister.textContent = originalText;
@@ -296,37 +503,4 @@ document.addEventListener('DOMContentLoaded', () => {
         leftEar.style.transform = `rotate(${-15 + (x * 10)}deg) skewX(20deg)`;
         rightEar.style.transform = `rotate(${15 + (x * 10)}deg) skewX(-20deg)`;
     });
-
-    // Global Dark Mode Toggle
-    const darkModeToggle = document.getElementById('dark-mode-toggle');
-    if (darkModeToggle) {
-        darkModeToggle.addEventListener('click', () => {
-            document.body.classList.toggle('dark-mode');
-            darkModeToggle.textContent = document.body.classList.contains('dark-mode') ? '☀️' : '🌙';
-        });
-    }
-
-    // Global Music Player Toggle
-    if (musicToggle && bgMusic) {
-        bgMusic.volume = 0.3;
-        musicToggle.addEventListener('click', () => {
-            if (bgMusic.paused) {
-                bgMusic.play();
-                musicToggle.textContent = '🔊';
-            } else {
-                bgMusic.pause();
-                musicToggle.textContent = '🔈';
-            }
-        });
-        
-        // One-time click anywhere to start music if not playing on login
-        document.body.addEventListener('click', function playMusicOnce() {
-            if (!document.body.classList.contains('in-game') && bgMusic.paused) {
-                bgMusic.play().then(() => {
-                    if(musicToggle) musicToggle.textContent = '🔊';
-                }).catch(e => {});
-            }
-            document.body.removeEventListener('click', playMusicOnce);
-        }, { once: true });
-    }
 });
