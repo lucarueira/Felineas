@@ -1905,16 +1905,34 @@ body.dark-mode .lvl0-card .btn-upgrade {
 body.dark-mode .lvl0-card .btn-upgrade:hover {
     background-color: #52402e;
     color: #ffffff !important;
-}
-
-/* ==========================================================================
+}/* ==========================================================================
    MOBILE APP STYLES & RESPONSIVE OVERHAUL (Mobile-First Experience)
    ========================================================================== */
 
-/* Hide mobile bottom navigation and more drawer by default on desktop */
-.mobile-bottom-nav,
-.mobile-more-menu {
-    display: none;
+/* Universal rule: Hide in-game and mobile navigation when NOT logged in */
+body:not(.in-game) #game-dashboard,
+body:not(.in-game) .game-layout,
+body:not(.in-game) .mobile-bottom-nav,
+body:not(.in-game) .mobile-more-menu,
+body:not(.in-game) .army-panel {
+    display: none !important;
+}
+
+/* Universal rule: Hide login elements when logged in */
+body.in-game #login-screen,
+body.in-game .login-modal,
+body.in-game .left-panel,
+body.in-game .top-nav,
+body.in-game .bottom-status {
+    display: none !important;
+}
+
+/* Desktop default for mobile elements */
+@media (min-width: 993px) {
+    .mobile-bottom-nav,
+    .mobile-more-menu {
+        display: none !important;
+    }
 }
 
 @media (max-width: 992px) {
@@ -1928,73 +1946,106 @@ body.dark-mode .lvl0-card .btn-upgrade:hover {
         -webkit-tap-highlight-color: transparent;
     }
 
+    /* -------------------------------------------------------------
+       2. Login & Welcome Screen on Mobile (Clean, Centered, No Overlap)
+       ------------------------------------------------------------- */
     body:not(.in-game), html:not(.in-game) {
         overflow-y: auto !important;
-        height: auto;
-        min-height: 100%;
+        height: auto !important;
+        min-height: 100vh !important;
+        background-color: #12100e !important;
     }
 
-    /* -------------------------------------------------------------
-       2. Login & Welcome Screen on Mobile
-       ------------------------------------------------------------- */
-    .game-container:not(.in-game) {
-        width: 100%;
-        min-height: 100vh;
-        height: auto;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: flex-start;
-        padding: 70px 14px 40px 14px;
-        overflow-y: auto;
-    }
-
-    .top-nav {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        transform: none;
-        border-radius: 0;
-        border-top: none;
-        border-left: none;
-        border-right: none;
-        padding: 8px 16px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        z-index: 100;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-    }
-
-    .top-nav ul div:first-child {
-        display: none; /* Hide non-essential static links on mobile */
-    }
-
-    .right-panel {
-        position: relative !important;
-        top: auto !important;
-        right: auto !important;
-        left: auto !important;
-        transform: none !important;
+    body:not(.in-game) .game-container {
         width: 100% !important;
-        max-width: 400px !important;
-        margin: 10px auto 20px auto !important;
-        z-index: 10;
+        min-height: 100vh !important;
+        height: auto !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
+        padding: 60px 14px 30px 14px !important;
+        overflow-y: auto !important;
+        position: relative !important;
+        background-size: cover !important;
+        background-position: center !important;
     }
 
-    .left-panel {
+    /* Top navigation on login: compact header bar */
+    body:not(.in-game) .top-nav {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        transform: none !important;
+        border-radius: 0 !important;
+        border-top: none !important;
+        border-left: none !important;
+        border-right: none !important;
+        padding: 8px 16px !important;
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        z-index: 100 !important;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.3) !important;
+    }
+
+    body:not(.in-game) .top-nav ul div:first-child {
+        display: none !important; /* Hide static news/guide links on mobile login */
+    }
+
+    /* Hide heavy tribe cards on mobile login to prevent screen collision */
+    body:not(.in-game) .left-panel {
+        display: none !important;
+    }
+
+    /* Login Modal Card on Mobile */
+    .login-modal {
         position: relative !important;
         top: auto !important;
         left: auto !important;
         right: auto !important;
+        bottom: auto !important;
         transform: none !important;
         width: 100% !important;
-        max-width: 400px !important;
-        margin: 0 auto 30px auto !important;
-        max-height: none !important;
-        overflow: visible !important;
-        z-index: 5;
+        max-width: 380px !important;
+        margin: 20px auto 20px auto !important;
+        padding: 26px 18px 22px 18px !important;
+        box-sizing: border-box !important;
+        z-index: 50 !important;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.6) !important;
+    }
+
+    .login-modal h1 {
+        font-size: 1.4rem !important;
+        margin-bottom: 20px !important;
+    }
+
+    .login-modal .input-wrapper input {
+        font-size: 16px !important; /* Prevents auto-zoom in mobile Safari */
+        padding: 12px 12px 12px 38px !important;
+    }
+
+    .login-modal .actions {
+        flex-direction: column !important;
+        gap: 10px !important;
+        margin-bottom: 12px !important;
+    }
+
+    .login-modal .actions .btn {
+        width: 100% !important;
+        padding: 13px !important;
+        font-size: 1.1rem !important;
+    }
+
+    .login-modal .cat-ears {
+        top: -24px !important;
+        padding: 0 24px !important;
+    }
+
+    .login-modal .ear {
+        width: 36px !important;
+        height: 36px !important;
     }
 
     .bottom-status {
@@ -2002,23 +2053,23 @@ body.dark-mode .lvl0-card .btn-upgrade:hover {
         bottom: auto !important;
         left: auto !important;
         transform: none !important;
-        margin-top: 15px;
-        width: 100%;
-        text-align: center;
+        margin-top: 15px !important;
+        width: 100% !important;
+        text-align: center !important;
     }
 
     /* -------------------------------------------------------------
        3. In-Game Layout (Native Mobile App Structure)
        ------------------------------------------------------------- */
     body.in-game .game-container {
-        width: 100vw;
-        height: 100vh;
-        overflow: hidden;
-        display: flex;
-        flex-direction: column;
+        width: 100vw !important;
+        height: 100vh !important;
+        overflow: hidden !important;
+        display: flex !important;
+        flex-direction: column !important;
     }
 
-    .game-layout {
+    body.in-game .game-layout {
         position: fixed !important;
         top: 0 !important;
         left: 0 !important;
@@ -2034,7 +2085,7 @@ body.dark-mode .lvl0-card .btn-upgrade:hover {
         border-radius: 0 !important;
         background: none !important;
         box-shadow: none !important;
-        z-index: 20;
+        z-index: 20 !important;
     }
 
     /* Hide desktop left sidebar nav on mobile */
@@ -2046,7 +2097,7 @@ body.dark-mode .lvl0-card .btn-upgrade:hover {
     .army-panel {
         display: none;
         position: fixed !important;
-        bottom: 60px !important;
+        bottom: calc(58px + env(safe-area-inset-bottom, 0px)) !important;
         left: 0 !important;
         right: 0 !important;
         top: 60px !important;
@@ -2055,14 +2106,18 @@ body.dark-mode .lvl0-card .btn-upgrade:hover {
         background: var(--parchment-bg) !important;
         border-top: 3px solid var(--gold) !important;
         border-radius: 20px 20px 0 0 !important;
-        box-shadow: 0 -8px 30px rgba(0,0,0,0.4) !important;
-        z-index: 990;
+        box-shadow: 0 -8px 30px rgba(0,0,0,0.5) !important;
+        z-index: 990 !important;
         overflow-y: auto !important;
-        padding: 20px 16px 50px 16px !important;
+        padding: 20px 16px 40px 16px !important;
         animation: slideUpMobile 0.25s ease-out forwards;
     }
 
     .army-panel.mobile-open {
+        display: block !important;
+    }
+
+    #btn-close-pop-mobile {
         display: block !important;
     }
 
@@ -2089,7 +2144,7 @@ body.dark-mode .lvl0-card .btn-upgrade:hover {
         border-top: none !important;
         border-bottom: 2px solid var(--parchment-border) !important;
         background: var(--parchment-bg) !important;
-        z-index: 50;
+        z-index: 50 !important;
         box-shadow: 0 2px 8px rgba(0,0,0,0.12) !important;
     }
 
@@ -2168,7 +2223,7 @@ body.dark-mode .lvl0-card .btn-upgrade:hover {
         flex: 1 !important;
         overflow-y: auto !important;
         -webkit-overflow-scrolling: touch !important;
-        padding: 12px 10px 80px 10px !important; /* 80px space for bottom nav bar */
+        padding: 12px 10px calc(80px + env(safe-area-inset-bottom, 0px)) 10px !important;
         border-radius: 0 !important;
         border: none !important;
     }
@@ -2217,20 +2272,20 @@ body.dark-mode .lvl0-card .btn-upgrade:hover {
     /* -------------------------------------------------------------
        6. Mobile Bottom Navigation Bar (Dock)
        ------------------------------------------------------------- */
-    .mobile-bottom-nav {
+    body.in-game .mobile-bottom-nav {
         display: flex !important;
         position: fixed !important;
         bottom: 0 !important;
         left: 0 !important;
         right: 0 !important;
-        height: 60px !important;
+        height: calc(58px + env(safe-area-inset-bottom, 0px)) !important;
+        padding-bottom: env(safe-area-inset-bottom, 0px) !important;
         background: var(--parchment-bg) !important;
         border-top: 2px solid var(--parchment-border) !important;
         box-shadow: 0 -4px 15px rgba(0,0,0,0.15) !important;
         z-index: 1000 !important;
         justify-content: space-around !important;
         align-items: center !important;
-        padding: 0 4px !important;
     }
 
     body.dark-mode .mobile-bottom-nav {
@@ -2252,6 +2307,7 @@ body.dark-mode .lvl0-card .btn-upgrade:hover {
         position: relative !important;
         transition: all 0.2s !important;
         -webkit-tap-highlight-color: transparent !important;
+        touch-action: manipulation;
     }
 
     .mobile-nav-btn.active {
@@ -2297,7 +2353,7 @@ body.dark-mode .lvl0-card .btn-upgrade:hover {
     /* Mobile 'More' Popup Sheet */
     .mobile-more-menu {
         position: fixed !important;
-        bottom: 66px !important;
+        bottom: calc(66px + env(safe-area-inset-bottom, 0px)) !important;
         left: 10px !important;
         right: 10px !important;
         background: var(--parchment-bg) !important;
@@ -2357,6 +2413,7 @@ body.dark-mode .lvl0-card .btn-upgrade:hover {
         font-weight: bold !important;
         cursor: pointer !important;
         text-align: left !important;
+        touch-action: manipulation;
     }
 
     body.dark-mode .mobile-more-item {
@@ -2388,6 +2445,7 @@ body.dark-mode .lvl0-card .btn-upgrade:hover {
         flex-shrink: 0 !important;
         padding: 6px 14px !important;
         font-size: 0.86rem !important;
+        touch-action: manipulation;
     }
 
     .hero-selection-grid {
@@ -2413,6 +2471,7 @@ body.dark-mode .lvl0-card .btn-upgrade:hover {
         width: 36px !important;
         height: 36px !important;
         font-size: 1.3rem !important;
+        touch-action: manipulation;
     }
 
     .tbh-slots-grid {
@@ -2440,6 +2499,20 @@ body.dark-mode .lvl0-card .btn-upgrade:hover {
         grid-template-columns: 1fr !important;
     }
 
+    .mission-card, .level-mission-card {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 10px !important;
+    }
+
+    .mission-action {
+        width: 100% !important;
+    }
+
+    .mission-action button {
+        width: 100% !important;
+    }
+
     /* -------------------------------------------------------------
        8. Modals & Stats Tables on Mobile
        ------------------------------------------------------------- */
@@ -2461,41 +2534,10 @@ body.dark-mode .lvl0-card .btn-upgrade:hover {
         min-width: 540px !important;
     }
 
-    #btn-close-pop-mobile {
-        display: block !important;
-    }
-
-    .mission-card, .level-mission-card {
-        flex-direction: column !important;
-        align-items: flex-start !important;
-        gap: 10px !important;
-    }
-
-    .mission-action {
-        width: 100% !important;
-    }
-
-    .mission-action button {
-        width: 100% !important;
-    }
-
-    /* iPhone Safe Area support */
-    .mobile-bottom-nav {
-        padding-bottom: env(safe-area-inset-bottom, 0px) !important;
-        height: calc(58px + env(safe-area-inset-bottom, 0px)) !important;
-    }
-
-    .village-area {
-        padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)) !important;
-    }
-
-    .army-panel {
-        bottom: calc(60px + env(safe-area-inset-bottom, 0px)) !important;
-    }
-
-    /* Fast touch reaction */
     button, a {
         touch-action: manipulation;
     }
+}
+
 }
 

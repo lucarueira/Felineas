@@ -90,35 +90,33 @@ export function initGame() {
     const viewQuartel = document.getElementById('view-quartel');
     const viewMercado = document.getElementById('view-mercado');
 
-    function switchTab(activeTab, activeView) {
-        document.querySelectorAll('.left-panel ul li a').forEach(a => a.classList.remove('active'));
-        function updateMobileNav(tabKey) {
-            document.querySelectorAll('.mobile-nav-btn').forEach(btn => {
-                if (btn.getAttribute('data-tab-id') === tabKey) {
-                    btn.classList.add('active');
-                } else {
-                    btn.classList.remove('active');
-                }
-            });
-        }
+    function updateMobileNav(tabKey) {
+        document.querySelectorAll('.mobile-nav-btn').forEach(btn => {
+            if (btn.getAttribute('data-tab-id') === tabKey) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+    }
 
-        function switchTab(activeTab, activeView, tabKey = '') {
-            document.querySelectorAll('.game-nav a').forEach(tab => tab.classList.remove('active'));
-            if (activeTab) activeTab.classList.add('active');
-            viewVillage.style.display = 'none';
-            viewMap.style.display = 'none';
-            viewMissions.style.display = 'none';
-            if(viewStats) viewStats.style.display = 'none';
-            if(viewPrefeitura) viewPrefeitura.style.display = 'none';
-            if(viewQuartel) viewQuartel.style.display = 'none';
-            if(viewMercado) viewMercado.style.display = 'none';
-            
-            const armyPanel = document.querySelector('.army-panel');
-            if (armyPanel) armyPanel.classList.remove('mobile-open');
+    function switchTab(activeTab, activeView, tabKey = '') {
+        document.querySelectorAll('.game-nav a, .left-panel ul li a').forEach(tab => tab.classList.remove('active'));
+        if (activeTab) activeTab.classList.add('active');
+        viewVillage.style.display = 'none';
+        viewMap.style.display = 'none';
+        viewMissions.style.display = 'none';
+        if(viewStats) viewStats.style.display = 'none';
+        if(viewPrefeitura) viewPrefeitura.style.display = 'none';
+        if(viewQuartel) viewQuartel.style.display = 'none';
+        if(viewMercado) viewMercado.style.display = 'none';
+        
+        const armyPanel = document.querySelector('.army-panel');
+        if (armyPanel) armyPanel.classList.remove('mobile-open');
 
-            activeView.style.display = 'block';
-            if (tabKey) updateMobileNav(tabKey);
-        }
+        activeView.style.display = 'block';
+        if (tabKey) updateMobileNav(tabKey);
+    }
 
         if (tabVillage && tabMap && tabMissions) {
             tabVillage.onclick = (e) => { e.preventDefault(); switchTab(tabVillage, viewVillage, 'tab-village'); };
@@ -324,7 +322,7 @@ export function initGame() {
     let autosaveCounter = 0;
 
     gameInterval = setInterval(() => {
-        if (document.getElementById('game-dashboard').style.display === 'block' || document.getElementById('game-dashboard').style.display === 'grid') {
+        if (document.body.classList.contains('in-game')) {
             // Use committed population for generation, with a minimum 0.1 multiplier if building is level 0
             const fishRate = state.pop.fish * Math.max(0.1, state.buildings.cais) * 0.5;
             const woodRate = state.pop.wood * (0.06 + (state.buildings.cabana * 0.04));
