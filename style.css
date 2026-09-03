@@ -1907,84 +1907,595 @@ body.dark-mode .lvl0-card .btn-upgrade:hover {
     color: #ffffff !important;
 }
 
-/* Responsive tweaks */
-@media (max-width: 1024px) {
-    .game-layout {
-        grid-template-columns: 200px 1fr;
-        grid-template-areas:
-            "nav header"
-            "nav main"
-            "nav army";
-    }
+/* ==========================================================================
+   MOBILE APP STYLES & RESPONSIVE OVERHAUL (Mobile-First Experience)
+   ========================================================================== */
+
+/* Hide mobile bottom navigation and more drawer by default on desktop */
+.mobile-bottom-nav,
+.mobile-more-menu {
+    display: none;
 }
 
-@media (max-width: 768px) {
-    .game-container {
+@media (max-width: 992px) {
+    /* -------------------------------------------------------------
+       1. Base Body & Container Adjustments
+       ------------------------------------------------------------- */
+    body, html {
+        overflow: hidden;
+        height: 100%;
+        width: 100%;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    body:not(.in-game), html:not(.in-game) {
+        overflow-y: auto !important;
+        height: auto;
+        min-height: 100%;
+    }
+
+    /* -------------------------------------------------------------
+       2. Login & Welcome Screen on Mobile
+       ------------------------------------------------------------- */
+    .game-container:not(.in-game) {
+        width: 100%;
+        min-height: 100vh;
+        height: auto;
+        display: flex;
         flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        padding: 70px 14px 40px 14px;
         overflow-y: auto;
     }
-    
+
     .top-nav {
+        position: fixed;
         top: 0;
         left: 0;
         width: 100%;
+        transform: none;
         border-radius: 0;
-        margin: 0;
+        border-top: none;
+        border-left: none;
+        border-right: none;
+        padding: 8px 16px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        z-index: 100;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    }
+
+    .top-nav ul div:first-child {
+        display: none; /* Hide non-essential static links on mobile */
+    }
+
+    .right-panel {
+        position: relative !important;
+        top: auto !important;
+        right: auto !important;
+        left: auto !important;
+        transform: none !important;
+        width: 100% !important;
+        max-width: 400px !important;
+        margin: 10px auto 20px auto !important;
+        z-index: 10;
     }
 
     .left-panel {
-        display: none; /* Hide tribes on mobile */
+        position: relative !important;
+        top: auto !important;
+        left: auto !important;
+        right: auto !important;
+        transform: none !important;
+        width: 100% !important;
+        max-width: 400px !important;
+        margin: 0 auto 30px auto !important;
+        max-height: none !important;
+        overflow: visible !important;
+        z-index: 5;
     }
 
-    .login-modal {
-        width: 90%;
-        max-width: 400px;
-        margin-top: 60px;
+    .bottom-status {
+        position: relative !important;
+        bottom: auto !important;
+        left: auto !important;
+        transform: none !important;
+        margin-top: 15px;
+        width: 100%;
+        text-align: center;
     }
 
-    /* Game Layout on Mobile */
-    .game-layout {
+    /* -------------------------------------------------------------
+       3. In-Game Layout (Native Mobile App Structure)
+       ------------------------------------------------------------- */
+    body.in-game .game-container {
+        width: 100vw;
+        height: 100vh;
+        overflow: hidden;
         display: flex;
         flex-direction: column;
-        height: auto;
-        min-height: 100vh;
-        gap: 10px;
-        padding: 10px;
-        padding-top: 0;
     }
 
-    .resource-bar {
-        flex-wrap: wrap;
-        justify-content: center;
-        gap: 10px;
-        position: sticky;
-        top: 0;
-        z-index: 10;
-        padding: 10px;
+    .game-layout {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        transform: none !important;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 0 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        border: none !important;
+        border-radius: 0 !important;
+        background: none !important;
+        box-shadow: none !important;
+        z-index: 20;
     }
 
+    /* Hide desktop left sidebar nav on mobile */
     .game-nav {
-        width: 100%;
-        margin-bottom: 10px;
+        display: none !important;
     }
 
-    .game-nav ul {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 5px;
+    /* Desktop right panel (Army & Pop) becomes an on-demand slide-up sheet */
+    .army-panel {
+        display: none;
+        position: fixed !important;
+        bottom: 60px !important;
+        left: 0 !important;
+        right: 0 !important;
+        top: 60px !important;
+        width: 100% !important;
+        height: auto !important;
+        background: var(--parchment-bg) !important;
+        border-top: 3px solid var(--gold) !important;
+        border-radius: 20px 20px 0 0 !important;
+        box-shadow: 0 -8px 30px rgba(0,0,0,0.4) !important;
+        z-index: 990;
+        overflow-y: auto !important;
+        padding: 20px 16px 50px 16px !important;
+        animation: slideUpMobile 0.25s ease-out forwards;
     }
 
-    .game-nav li {
-        margin-bottom: 0;
-        flex: 1;
-        min-width: 120px;
+    .army-panel.mobile-open {
+        display: block !important;
     }
 
+    @keyframes slideUpMobile {
+        from { transform: translateY(100%); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+
+    /* -------------------------------------------------------------
+       4. Compact Mobile Resource Header
+       ------------------------------------------------------------- */
+    .resource-bar {
+        position: sticky !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 6px !important;
+        padding: 6px 10px !important;
+        border-radius: 0 !important;
+        border-left: none !important;
+        border-right: none !important;
+        border-top: none !important;
+        border-bottom: 2px solid var(--parchment-border) !important;
+        background: var(--parchment-bg) !important;
+        z-index: 50;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.12) !important;
+    }
+
+    .resource-bar > div:first-child {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        width: 100% !important;
+    }
+
+    .profile-card-btn {
+        padding: 2px 8px !important;
+        gap: 8px !important;
+    }
+
+    .profile-avatar-pill {
+        width: 28px !important;
+        height: 28px !important;
+        font-size: 1.1rem !important;
+    }
+
+    .profile-title-text {
+        font-size: 0.85rem !important;
+    }
+
+    .treasury-group {
+        padding: 2px 8px !important;
+        gap: 6px !important;
+    }
+
+    .treasury-group .res-value {
+        font-size: 0.95rem !important;
+    }
+
+    .resource-group-production {
+        display: flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        width: 100% !important;
+        overflow-x: auto !important;
+        flex-wrap: nowrap !important;
+        padding: 2px 0 4px 0 !important;
+        -webkit-overflow-scrolling: touch !important;
+        scrollbar-width: none !important;
+    }
+
+    .resource-group-production::-webkit-scrollbar {
+        display: none !important;
+    }
+
+    .resource-item {
+        padding: 3px 7px !important;
+        font-size: 0.82rem !important;
+        gap: 4px !important;
+        flex-shrink: 0 !important;
+        background: rgba(0, 0, 0, 0.04) !important;
+    }
+
+    .resource-item .res-icon {
+        font-size: 1rem !important;
+    }
+
+    .resource-item .res-value {
+        font-size: 0.9rem !important;
+    }
+
+    .resource-item .res-rate {
+        font-size: 0.62rem !important;
+    }
+
+    /* -------------------------------------------------------------
+       5. Main Scrollable Content Area on Mobile
+       ------------------------------------------------------------- */
+    .village-area {
+        width: 100% !important;
+        flex: 1 !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        padding: 12px 10px 80px 10px !important; /* 80px space for bottom nav bar */
+        border-radius: 0 !important;
+        border: none !important;
+    }
+
+    .village-header {
+        margin-bottom: 14px !important;
+        padding-bottom: 8px !important;
+    }
+
+    .village-header h2 {
+        font-size: 1.5rem !important;
+    }
+
+    .village-header p {
+        font-size: 0.8rem !important;
+    }
+
+    /* Buildings in 1 column */
     .building-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+    }
+
+    .building-card {
+        padding: 14px !important;
+    }
+
+    .building-icon {
+        font-size: 2.2rem !important;
+    }
+
+    /* Active Expedition Banner */
+    .village-expedition-banner {
+        padding: 8px 12px !important;
+        margin-bottom: 12px !important;
+    }
+
+    .expedition-banner-content {
+        gap: 8px !important;
+    }
+
+    .expedition-banner-info {
+        font-size: 0.84rem !important;
+    }
+
+    /* -------------------------------------------------------------
+       6. Mobile Bottom Navigation Bar (Dock)
+       ------------------------------------------------------------- */
+    .mobile-bottom-nav {
+        display: flex !important;
+        position: fixed !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        height: 60px !important;
+        background: var(--parchment-bg) !important;
+        border-top: 2px solid var(--parchment-border) !important;
+        box-shadow: 0 -4px 15px rgba(0,0,0,0.15) !important;
+        z-index: 1000 !important;
+        justify-content: space-around !important;
+        align-items: center !important;
+        padding: 0 4px !important;
+    }
+
+    body.dark-mode .mobile-bottom-nav {
+        background: #181410 !important;
+        border-top-color: #4a3a2d !important;
+    }
+
+    .mobile-nav-btn {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+        flex: 1 !important;
+        background: none !important;
+        border: none !important;
+        padding: 4px 0 !important;
+        color: var(--text-secondary) !important;
+        cursor: pointer !important;
+        position: relative !important;
+        transition: all 0.2s !important;
+        -webkit-tap-highlight-color: transparent !important;
+    }
+
+    .mobile-nav-btn.active {
+        color: var(--gold-hover) !important;
+    }
+
+    .mobile-nav-btn.active .m-nav-icon {
+        transform: scale(1.18) !important;
+    }
+
+    .mobile-nav-btn.active .m-nav-label {
+        color: var(--gold-hover) !important;
+        font-weight: 900 !important;
+    }
+
+    .m-nav-icon {
+        font-size: 1.3rem !important;
+        line-height: 1 !important;
+        margin-bottom: 2px !important;
+        transition: transform 0.2s !important;
+    }
+
+    .m-nav-label {
+        font-size: 0.68rem !important;
+        font-weight: 700 !important;
+        font-family: var(--font-heading) !important;
+        letter-spacing: 0.3px !important;
+    }
+
+    .m-badge {
+        position: absolute !important;
+        top: 2px !important;
+        right: calc(50% - 16px) !important;
+        background: #d32f2f !important;
+        color: #fff !important;
+        font-size: 0.65rem !important;
+        font-weight: 900 !important;
+        padding: 1px 5px !important;
+        border-radius: 10px !important;
+        line-height: 1.2 !important;
+    }
+
+    /* Mobile 'More' Popup Sheet */
+    .mobile-more-menu {
+        position: fixed !important;
+        bottom: 66px !important;
+        left: 10px !important;
+        right: 10px !important;
+        background: var(--parchment-bg) !important;
+        border: 2px solid var(--gold) !important;
+        border-radius: var(--border-radius-md) !important;
+        box-shadow: 0 -6px 20px rgba(0,0,0,0.3) !important;
+        z-index: 1050 !important;
+        padding: 16px !important;
+        animation: popDown 0.2s ease-out !important;
+    }
+
+    body.dark-mode .mobile-more-menu {
+        background: #201a14 !important;
+        border-color: var(--gold) !important;
+    }
+
+    .mobile-more-header {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        border-bottom: 1.5px solid var(--parchment-border) !important;
+        padding-bottom: 8px !important;
+        margin-bottom: 12px !important;
+    }
+
+    .mobile-more-header h4 {
+        margin: 0 !important;
+        font-family: var(--font-heading) !important;
+        color: var(--wood-dark) !important;
+    }
+
+    .btn-close-mini {
+        background: none !important;
+        border: none !important;
+        font-size: 1.2rem !important;
+        color: var(--text-secondary) !important;
+        cursor: pointer !important;
+    }
+
+    .mobile-more-grid {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 10px !important;
+    }
+
+    .mobile-more-item {
+        display: flex !important;
+        align-items: center !important;
+        gap: 8px !important;
+        padding: 12px !important;
+        background: rgba(0,0,0,0.04) !important;
+        border: 1px solid var(--parchment-border) !important;
+        border-radius: var(--border-radius-sm) !important;
+        color: var(--wood-dark) !important;
+        font-family: var(--font-heading) !important;
+        font-size: 0.85rem !important;
+        font-weight: bold !important;
+        cursor: pointer !important;
+        text-align: left !important;
+    }
+
+    body.dark-mode .mobile-more-item {
+        background: rgba(255,255,255,0.03) !important;
+        color: var(--text-primary) !important;
+    }
+
+    .more-item-icon {
+        font-size: 1.3rem !important;
+    }
+
+    /* -------------------------------------------------------------
+       7. Quartel, Heroes, TBH Equipment & Tower on Mobile
+       ------------------------------------------------------------- */
+    .quartel-subnav {
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
+        padding-bottom: 6px !important;
+        gap: 8px !important;
+        -webkit-overflow-scrolling: touch !important;
+        scrollbar-width: none !important;
+    }
+
+    .quartel-subnav::-webkit-scrollbar {
+        display: none !important;
+    }
+
+    .quartel-tab-btn {
+        flex-shrink: 0 !important;
+        padding: 6px 14px !important;
+        font-size: 0.86rem !important;
+    }
+
+    .hero-selection-grid {
+        grid-template-columns: 1fr !important;
+        gap: 16px !important;
+    }
+
+    .hero-portrait-img {
+        max-height: 280px !important;
+    }
+
+    .hero-rpg-container {
+        grid-template-columns: 1fr !important;
+        gap: 14px !important;
+        padding: 14px !important;
+    }
+
+    .hero-rpg-portrait {
+        max-height: 240px !important;
+    }
+
+    .btn-stat-up {
+        width: 36px !important;
+        height: 36px !important;
+        font-size: 1.3rem !important;
+    }
+
+    .tbh-slots-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 8px !important;
+    }
+
+    .inventory-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .tower-header-banner {
+        height: 140px !important;
+    }
+
+    .tower-banner-overlay h3 {
+        font-size: 1.15rem !important;
+    }
+
+    .tower-floor-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .troop-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* -------------------------------------------------------------
+       8. Modals & Stats Tables on Mobile
+       ------------------------------------------------------------- */
+    .modal-content, .profile-modal-large {
+        width: 95vw !important;
+        max-width: 95vw !important;
+        max-height: 85vh !important;
+        margin: auto !important;
+        padding: 16px !important;
+        border-radius: var(--border-radius-md) !important;
+    }
+
+    .stats-table-wrapper {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+
+    .stats-table {
+        min-width: 540px !important;
+    }
+
+    #btn-close-pop-mobile {
+        display: block !important;
+    }
+
+    .mission-card, .level-mission-card {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 10px !important;
+    }
+
+    .mission-action {
+        width: 100% !important;
+    }
+
+    .mission-action button {
+        width: 100% !important;
+    }
+
+    /* iPhone Safe Area support */
+    .mobile-bottom-nav {
+        padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+        height: calc(58px + env(safe-area-inset-bottom, 0px)) !important;
+    }
+
+    .village-area {
+        padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)) !important;
     }
 
     .army-panel {
-        width: 100%;
+        bottom: calc(60px + env(safe-area-inset-bottom, 0px)) !important;
+    }
+
+    /* Fast touch reaction */
+    button, a {
+        touch-action: manipulation;
     }
 }
+

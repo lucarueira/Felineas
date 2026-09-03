@@ -2,9 +2,16 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Terras Felineas - Guerras de Bigode</title>
     <meta name="description" content="Bem-vindo às Terras Felineas. Escolha sua tribo, construa sua vila e domine o mundo dos gatos.">
+    
+    <!-- Mobile PWA / App Meta -->
+    <meta name="theme-color" content="#1a140f">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="format-detection" content="telephone=no">
     
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -521,7 +528,10 @@
 
             <!-- Right Panel: Population & Army -->
             <aside class="army-panel parchment-panel">
-                <h3>População e Exército</h3>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid var(--parchment-border); padding-bottom: 8px;">
+                    <h3 style="margin: 0;">População e Exército</h3>
+                    <button type="button" id="btn-close-pop-mobile" class="btn-close-mini" style="display: none; font-size: 1.4rem; padding: 2px 8px; cursor: pointer;">✕</button>
+                </div>
                 
                 <div class="capacity" style="margin-bottom: 20px;">
                     <span>Capacidade da Vila:</span>
@@ -582,6 +592,61 @@
                     <strong id="val-scouts">0</strong>
                 </div>
             </aside>
+
+            <!-- Mobile Bottom Navigation Bar (App style on mobile screens) -->
+            <nav id="mobile-bottom-nav" class="mobile-bottom-nav">
+                <button type="button" class="mobile-nav-btn active" data-tab-id="tab-village" id="m-tab-village">
+                    <span class="m-nav-icon">⛺</span>
+                    <span class="m-nav-label">Vila</span>
+                </button>
+                <button type="button" class="mobile-nav-btn" data-tab-id="tab-quartel" id="m-tab-quartel">
+                    <span class="m-nav-icon">⚔️</span>
+                    <span class="m-nav-label">Quartel</span>
+                </button>
+                <button type="button" class="mobile-nav-btn" data-tab-id="tab-pop" id="m-tab-pop">
+                    <span class="m-nav-icon">🐾</span>
+                    <span class="m-nav-label">Gatos</span>
+                </button>
+                <button type="button" class="mobile-nav-btn" data-tab-id="tab-missions" id="m-tab-missions">
+                    <span class="m-nav-icon">📜</span>
+                    <span class="m-nav-label">Missões</span>
+                    <span id="m-mission-badge" class="m-badge" style="display: none;">!</span>
+                </button>
+                <button type="button" class="mobile-nav-btn" data-tab-id="tab-stats" id="m-tab-stats">
+                    <span class="m-nav-icon">📊</span>
+                    <span class="m-nav-label">Stats</span>
+                </button>
+                <button type="button" class="mobile-nav-btn" data-tab-id="tab-more" id="m-tab-more">
+                    <span class="m-nav-icon">🏛️</span>
+                    <span class="m-nav-label">Mais</span>
+                </button>
+            </nav>
+
+            <!-- Mobile 'More' Drawer / Sheet -->
+            <div id="mobile-more-menu" class="mobile-more-menu" style="display: none;">
+                <div class="mobile-more-header">
+                    <h4>🏛️ Menu de Gestão</h4>
+                    <button type="button" id="btn-close-more" class="btn-close-mini">✕</button>
+                </div>
+                <div class="mobile-more-grid">
+                    <button type="button" class="mobile-more-item" data-tab-id="tab-map">
+                        <span class="more-item-icon">🗺️</span>
+                        <span>Mapa das Terras</span>
+                    </button>
+                    <button type="button" class="mobile-more-item" data-tab-id="tab-prefeitura">
+                        <span class="more-item-icon">🏛️</span>
+                        <span>Prefeitura</span>
+                    </button>
+                    <button type="button" class="mobile-more-item" data-tab-id="tab-mercado">
+                        <span class="more-item-icon">🏪</span>
+                        <span>Mercado</span>
+                    </button>
+                    <button type="button" class="mobile-more-item" id="m-btn-profile">
+                        <span class="more-item-icon">👑</span>
+                        <span>Perfil do Líder</span>
+                    </button>
+                </div>
+            </div>
         </main>
         
         <!-- Modals -->

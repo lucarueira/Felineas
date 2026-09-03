@@ -92,37 +92,113 @@ export function initGame() {
 
     function switchTab(activeTab, activeView) {
         document.querySelectorAll('.left-panel ul li a').forEach(a => a.classList.remove('active'));
-        activeTab.classList.add('active');
-        viewVillage.style.display = 'none';
-        viewMap.style.display = 'none';
-        viewMissions.style.display = 'none';
-        if(viewStats) viewStats.style.display = 'none';
-        if(viewPrefeitura) viewPrefeitura.style.display = 'none';
-        if(viewQuartel) viewQuartel.style.display = 'none';
-        if(viewMercado) viewMercado.style.display = 'none';
-        activeView.style.display = 'block';
-    }
+        function updateMobileNav(tabKey) {
+            document.querySelectorAll('.mobile-nav-btn').forEach(btn => {
+                if (btn.getAttribute('data-tab-id') === tabKey) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+        }
 
-    if (tabVillage && tabMap && tabMissions) {
-        tabVillage.onclick = (e) => { e.preventDefault(); switchTab(tabVillage, viewVillage); };
-        tabMap.onclick = (e) => { e.preventDefault(); switchTab(tabMap, viewMap); };
-        tabMissions.onclick = (e) => { e.preventDefault(); switchTab(tabMissions, viewMissions); };
-        if(tabStats) tabStats.onclick = (e) => { e.preventDefault(); switchTab(tabStats, viewStats); };
-        if(tabPrefeitura) tabPrefeitura.onclick = (e) => { e.preventDefault(); switchTab(tabPrefeitura, viewPrefeitura); };
-        if(tabQuartel) tabQuartel.onclick = (e) => { e.preventDefault(); switchTab(tabQuartel, viewQuartel); renderQuartel(); };
-        if(tabMercado) tabMercado.onclick = (e) => { e.preventDefault(); switchTab(tabMercado, viewMercado); };
+        function switchTab(activeTab, activeView, tabKey = '') {
+            document.querySelectorAll('.game-nav a').forEach(tab => tab.classList.remove('active'));
+            if (activeTab) activeTab.classList.add('active');
+            viewVillage.style.display = 'none';
+            viewMap.style.display = 'none';
+            viewMissions.style.display = 'none';
+            if(viewStats) viewStats.style.display = 'none';
+            if(viewPrefeitura) viewPrefeitura.style.display = 'none';
+            if(viewQuartel) viewQuartel.style.display = 'none';
+            if(viewMercado) viewMercado.style.display = 'none';
+            
+            const armyPanel = document.querySelector('.army-panel');
+            if (armyPanel) armyPanel.classList.remove('mobile-open');
 
-        const btnGotoQuartel = document.getElementById('btn-goto-quartel');
-        if (btnGotoQuartel) {
-            btnGotoQuartel.onclick = () => {
-                if (tabQuartel && viewQuartel) {
-                    switchTab(tabQuartel, viewQuartel);
-                    currentQuartelTab = 'tower';
-                    renderQuartel();
+            activeView.style.display = 'block';
+            if (tabKey) updateMobileNav(tabKey);
+        }
+
+        if (tabVillage && tabMap && tabMissions) {
+            tabVillage.onclick = (e) => { e.preventDefault(); switchTab(tabVillage, viewVillage, 'tab-village'); };
+            tabMap.onclick = (e) => { e.preventDefault(); switchTab(tabMap, viewMap, 'tab-map'); };
+            tabMissions.onclick = (e) => { e.preventDefault(); switchTab(tabMissions, viewMissions, 'tab-missions'); };
+            if(tabStats) tabStats.onclick = (e) => { e.preventDefault(); switchTab(tabStats, viewStats, 'tab-stats'); };
+            if(tabPrefeitura) tabPrefeitura.onclick = (e) => { e.preventDefault(); switchTab(tabPrefeitura, viewPrefeitura); };
+            if(tabQuartel) tabQuartel.onclick = (e) => { e.preventDefault(); switchTab(tabQuartel, viewQuartel, 'tab-quartel'); renderQuartel(); };
+            if(tabMercado) tabMercado.onclick = (e) => { e.preventDefault(); switchTab(tabMercado, viewMercado); };
+
+            const btnGotoQuartel = document.getElementById('btn-goto-quartel');
+            if (btnGotoQuartel) {
+                btnGotoQuartel.onclick = () => {
+                    if (tabQuartel && viewQuartel) {
+                        switchTab(tabQuartel, viewQuartel, 'tab-quartel');
+                        currentQuartelTab = 'tower';
+                        renderQuartel();
+                    }
+                };
+            }
+        }
+
+        // Mobile Bottom Nav Handlers
+        const mTabVillage = document.getElementById('m-tab-village');
+        const mTabQuartel = document.getElementById('m-tab-quartel');
+        const mTabPop = document.getElementById('m-tab-pop');
+        const mTabMissions = document.getElementById('m-tab-missions');
+        const mTabStats = document.getElementById('m-tab-stats');
+        const mTabMore = document.getElementById('m-tab-more');
+        const mobileMoreMenu = document.getElementById('mobile-more-menu');
+        const btnCloseMore = document.getElementById('btn-close-more');
+
+        if (mTabVillage) mTabVillage.onclick = () => switchTab(tabVillage, viewVillage, 'tab-village');
+        if (mTabQuartel) mTabQuartel.onclick = () => { switchTab(tabQuartel, viewQuartel, 'tab-quartel'); renderQuartel(); };
+        if (mTabMissions) mTabMissions.onclick = () => switchTab(tabMissions, viewMissions, 'tab-missions');
+        if (mTabStats) mTabStats.onclick = () => switchTab(tabStats, viewStats, 'tab-stats');
+        
+        if (mTabPop) {
+            mTabPop.onclick = () => {
+                const armyPanel = document.querySelector('.army-panel');
+                if (armyPanel) {
+                    armyPanel.classList.toggle('mobile-open');
+                    if (armyPanel.classList.contains('mobile-open')) {
+                        updateMobileNav('tab-pop');
+                    }
                 }
             };
         }
-    }
+
+        const btnClosePopMobile = document.getElementById('btn-close-pop-mobile');
+        if (btnClosePopMobile) {
+            btnClosePopMobile.onclick = () => {
+                const armyPanel = document.querySelector('.army-panel');
+                if (armyPanel) armyPanel.classList.remove('mobile-open');
+            };
+        }
+
+        if (mTabMore && mobileMoreMenu) {
+            mTabMore.onclick = () => {
+                mobileMoreMenu.style.display = mobileMoreMenu.style.display === 'none' ? 'block' : 'none';
+            };
+        }
+
+        if (btnCloseMore && mobileMoreMenu) {
+            btnCloseMore.onclick = () => { mobileMoreMenu.style.display = 'none'; };
+        }
+
+        document.querySelectorAll('.mobile-more-item').forEach(item => {
+            item.onclick = () => {
+                const tabId = item.getAttribute('data-tab-id');
+                if (mobileMoreMenu) mobileMoreMenu.style.display = 'none';
+                if (tabId === 'tab-map') switchTab(tabMap, viewMap, 'tab-map');
+                else if (tabId === 'tab-prefeitura') switchTab(tabPrefeitura, viewPrefeitura);
+                else if (tabId === 'tab-mercado') switchTab(tabMercado, viewMercado);
+                else if (item.id === 'm-btn-profile') {
+                    const modal = document.getElementById('modal-profile');
+                    if (modal) modal.style.display = 'flex';
+                }
+            };
+        });
 
     // Set up allocators
     document.querySelectorAll('.btn-alloc').forEach(btn => {
@@ -496,6 +572,8 @@ function renderMissions() {
 
     const badge = document.getElementById('mission-badge');
     if (badge) badge.style.display = hasNotification ? 'inline-block' : 'none';
+    const mBadge = document.getElementById('m-mission-badge');
+    if (mBadge) mBadge.style.display = hasNotification ? 'inline-block' : 'none';
 
     container.querySelectorAll('.btn-claim').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -559,8 +637,10 @@ export function renderLevelMissions() {
     });
 
     const badge = document.getElementById('mission-badge');
-    if (badge && hasDiamondNotification) {
-        badge.style.display = 'inline-block';
+    const mBadge = document.getElementById('m-mission-badge');
+    if (hasDiamondNotification) {
+        if (badge) badge.style.display = 'inline-block';
+        if (mBadge) mBadge.style.display = 'inline-block';
     }
 }
 
