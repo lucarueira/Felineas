@@ -50,13 +50,29 @@ Se você vir o erro `FirebaseError: [code=permission-denied]: Missing or insuffi
 
 ---
 
-## 🌐 Deploy no Netlify
+## 🌐 Deploy no Netlify & Autorização de Domínio no Firebase
 
-Para hospedar o jogo gratuitamente no Netlify:
+Para hospedar o jogo gratuitamente no Netlify e permitir que os jogadores façam login:
 1. Conecte seu repositório GitHub ao [Netlify](https://app.netlify.com/).
-2. **Build command:** Deixe em branco (é uma aplicação estática Vanilla JS).
+2. **Build command:** Deixe em branco (aplicação estática Vanilla JS).
 3. **Publish directory:** `./` (raiz do projeto).
 4. Clique em **Deploy Site**.
+5. ⚠️ **MUITO IMPORTANTE PARA O LOGIN NO NETLIFY:**
+   - O Firebase Authentication por padrão bloqueia requisições de domínios desconhecidos.
+   - Acesse o [Console do Firebase](https://console.firebase.google.com/) > seu projeto (**felineas-app**).
+   - No menu lateral, vá em **Authentication** > aba **Configurações (Settings)** > **Domínios Autorizados (Authorized Domains)**.
+   - Clique em **Adicionar domínio** e insira o domínio do seu Netlify (exemplo: `seu-site.netlify.app`).
+   - Pronto! O login e cadastro por e-mail e senha no Netlify funcionarão perfeitamente.
+
+---
+
+## 🏆 Sistema de Nível 100 & Progressão Épica
+
+- **Nível Máximo:** 100 (tanto para a Conta quanto para os Heróis Felinos).
+- **Missões de Nível:** 17 marcos ao longo do caminho até o Nível 100, concedendo até 1.000 Diamantes.
+- **Missões de Vila:** Progressão contínua com marcos para Cabana, Quartel, Arranhador, Mina, Mercado, Prefeitura, exércitos (até 50 tropas), tesouro em ouro e andares da Torre.
+- **Resgate Automático de Progresso:** Caso o jogador troque de senha ou entre com a conta registrada e a vila venha em branco, o sistema verifica automaticamente backups locais de sessões anteriores na máquina e restaura seu progresso para a conta oficial.
+- **Redefinição Segura de Senha:** Suporte completo ao link enviado por e-mail do Firebase, com modal nativo para definir e confirmar o novo segredo sem bloqueios por cache antigo.
 
 ---
 

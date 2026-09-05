@@ -655,12 +655,52 @@ const DEFAULT_STATE = {
     pop: { max: 6, idle: 4, fish: 1, wood: 1, wool: 0, mine: 0, scouts: 0 },
     tempPop: { max: 6, idle: 4, fish: 1, wood: 1, wool: 0, mine: 0, scouts: 0 },
     missions: {
-        cabanaLvl2: { done: false, ready: false, desc: "Evolua a Cabana do Líder para o Nível 2", reward: 10 },
+        // Marco Inicial
+        cabanaLvl2: { done: false, ready: false, desc: "Evolua a Cabana do Líder para o Nível 2", reward: 15 },
         caisLvl1: { done: true, ready: false, desc: "Construa o Cais de Pesca", reward: 15 },
-        quartelLvl1: { done: false, ready: false, desc: "Construa o Quartel Felino", reward: 25 },
-        towerFloor1: { done: false, ready: false, desc: "Conquiste o Andar 1 da Torre dos Desafios", reward: 15 },
-        trainArmy5: { done: false, ready: false, desc: "Treine ao menos 5 guerreiros no Quartel", reward: 20 },
-        equipItem1: { done: false, ready: false, desc: "Equipe um Item de Equipamento no seu Herói", reward: 25 }
+        arranhadorLvl1: { done: false, ready: false, desc: "Construa o Arranhador Felino", reward: 20 },
+        minaLvl1: { done: false, ready: false, desc: "Construa a Mina Subterrânea", reward: 25 },
+        quartelLvl1: { done: false, ready: false, desc: "Construa o Quartel Felino", reward: 30 },
+        mercadoLvl1: { done: false, ready: false, desc: "Construa a Feira Felina (Mercado)", reward: 35 },
+        prefeituraLvl1: { done: false, ready: false, desc: "Erga o Paço Municipal (Prefeitura)", reward: 40 },
+        trainArmy5: { done: false, ready: false, desc: "Treine ao menos 5 combatentes no Quartel", reward: 25 },
+        equipItem1: { done: false, ready: false, desc: "Equipe um Item de Equipamento no seu Herói", reward: 25 },
+        towerFloor1: { done: false, ready: false, desc: "Conquiste o Andar 1 da Torre dos Desafios", reward: 20 },
+
+        // Marco Intermediário
+        cabanaLvl5: { done: false, ready: false, desc: "Evolua a Cabana para o Nível 5", reward: 50 },
+        caisLvl3: { done: false, ready: false, desc: "Evolua o Cais de Pesca para o Nível 3", reward: 45 },
+        arranhadorLvl3: { done: false, ready: false, desc: "Evolua o Arranhador para o Nível 3", reward: 45 },
+        minaLvl3: { done: false, ready: false, desc: "Evolua a Mina para o Nível 3", reward: 50 },
+        quartelLvl3: { done: false, ready: false, desc: "Evolua o Quartel Felino para o Nível 3", reward: 60 },
+        trainArmy15: { done: false, ready: false, desc: "Mobilize um exército de 15 soldados", reward: 70 },
+        towerFloor5: { done: false, ready: false, desc: "Conquiste o Andar 5 da Torre dos Desafios", reward: 75 },
+        popTotal10: { done: false, ready: false, desc: "Alcance 10 gatos cidadãos na sua vila", reward: 50 },
+        goldHoard500: { done: false, ready: false, desc: "Acumule 500 moedas de Ouro no tesouro", reward: 100 },
+        heroLevel5: { done: false, ready: false, desc: "Evolua qualquer Herói para o Nível 5", reward: 80 },
+        twoHeroes: { done: false, ready: false, desc: "Desbloqueie um 2º Herói na Taverna", reward: 120 },
+
+        // Marco Avançado
+        cabanaLvl10: { done: false, ready: false, desc: "Evolua a Cabana para o Nível 10", reward: 150 },
+        quartelLvl5: { done: false, ready: false, desc: "Evolua o Quartel Felino para o Nível 5", reward: 120 },
+        minaLvl5: { done: false, ready: false, desc: "Evolua a Mina para o Nível 5", reward: 120 },
+        towerFloor10: { done: false, ready: false, desc: "Derrote o Chefe do Andar 10 da Torre", reward: 150 },
+        trainArmy30: { done: false, ready: false, desc: "Comande um poderoso exército de 30 soldados", reward: 150 },
+        popTotal20: { done: false, ready: false, desc: "Alcance 20 gatos cidadãos na sua vila", reward: 100 },
+        goldHoard2000: { done: false, ready: false, desc: "Acumule 2.000 moedas de Ouro no tesouro", reward: 250 },
+        heroLevel10: { done: false, ready: false, desc: "Evolua seu Herói principal para o Nível 10", reward: 180 },
+        threeHeroes: { done: false, ready: false, desc: "Reúna o trio lendário de Heróis Felinos", reward: 300 },
+
+        // Marco Épico / Lendário
+        cabanaLvl20: { done: false, ready: false, desc: "Evolua a Cabana para o Nível 20", reward: 400 },
+        towerFloor20: { done: false, ready: false, desc: "Conquiste o Andar 20 da Torre dos Desafios", reward: 350 },
+        towerFloor30: { done: false, ready: false, desc: "Conquiste o Andar 30 da Torre dos Desafios", reward: 500 },
+        trainArmy50: { done: false, ready: false, desc: "Reúna uma legião imperial de 50 tropas", reward: 400 },
+        goldHoard5000: { done: false, ready: false, desc: "Acumule 5.000 moedas de Ouro no tesouro", reward: 600 },
+        heroLevel25: { done: false, ready: false, desc: "Alcance o Nível 25 com seu Herói", reward: 350 },
+        heroLevel50: { done: false, ready: false, desc: "Alcance o lendário Nível 50 com seu Herói", reward: 750 },
+        accountLevel50: { done: false, ready: false, desc: "Alcance o Nível 50 de Conta", reward: 800 },
+        accountLevel100: { done: false, ready: false, desc: "Glória Suprema: Alcance o Nível 100 de Conta!", reward: 2000 }
     },
     account: {
         level: 1,
@@ -672,7 +712,19 @@ const DEFAULT_STATE = {
         lvl3: { levelReq: 3, desc: "Alcance o Nível 3 de Conta", rewardDiamonds: 10, claimed: false },
         lvl4: { levelReq: 4, desc: "Alcance o Nível 4 de Conta", rewardDiamonds: 15, claimed: false },
         lvl5: { levelReq: 5, desc: "Alcance o Nível 5 de Conta", rewardDiamonds: 25, claimed: false },
-        lvl10: { levelReq: 10, desc: "Alcance o Nível 10 de Conta", rewardDiamonds: 50, claimed: false }
+        lvl8: { levelReq: 8, desc: "Alcance o Nível 8 de Conta", rewardDiamonds: 35, claimed: false },
+        lvl10: { levelReq: 10, desc: "Alcance o Nível 10 de Conta", rewardDiamonds: 50, claimed: false },
+        lvl15: { levelReq: 15, desc: "Alcance o Nível 15 de Conta", rewardDiamonds: 75, claimed: false },
+        lvl20: { levelReq: 20, desc: "Alcance o Nível 20 de Conta", rewardDiamonds: 100, claimed: false },
+        lvl25: { levelReq: 25, desc: "Alcance o Nível 25 de Conta", rewardDiamonds: 125, claimed: false },
+        lvl30: { levelReq: 30, desc: "Alcance o Nível 30 de Conta", rewardDiamonds: 150, claimed: false },
+        lvl40: { levelReq: 40, desc: "Alcance o Nível 40 de Conta", rewardDiamonds: 200, claimed: false },
+        lvl50: { levelReq: 50, desc: "Alcance o Nível 50 de Conta", rewardDiamonds: 250, claimed: false },
+        lvl60: { levelReq: 60, desc: "Alcance o Nível 60 de Conta", rewardDiamonds: 300, claimed: false },
+        lvl70: { levelReq: 70, desc: "Alcance o Nível 70 de Conta", rewardDiamonds: 350, claimed: false },
+        lvl80: { levelReq: 80, desc: "Alcance o Nível 80 de Conta", rewardDiamonds: 400, claimed: false },
+        lvl90: { levelReq: 90, desc: "Alcance o Nível 90 de Conta", rewardDiamonds: 500, claimed: false },
+        lvl100: { levelReq: 100, desc: "Lenda Suprema: Alcance o Nível 100 de Conta!", rewardDiamonds: 1000, claimed: false }
     },
     profile: {
         avatar: '🦁',
@@ -732,13 +784,24 @@ export function addXP(amount) {
     if (!state.account) state.account = { ...DEFAULT_STATE.account };
     const mult = globalSettings.xpMultiplier || 1.0;
     const finalAmount = Math.max(1, Math.round(amount * mult));
+
+    if (state.account.level >= 100) {
+        state.account.level = 100;
+        state.account.xp = state.account.xpToNextLevel;
+        return { leveledUp: false, level: 100, xp: state.account.xp, xpToNextLevel: state.account.xpToNextLevel, gained: finalAmount };
+    }
+
     state.account.xp += finalAmount;
     let leveledUp = false;
-    while (state.account.xp >= state.account.xpToNextLevel) {
+    while (state.account.level < 100 && state.account.xp >= state.account.xpToNextLevel) {
         state.account.xp -= state.account.xpToNextLevel;
         state.account.level += 1;
         state.account.xpToNextLevel = Math.floor(state.account.level * 100 * 1.25);
         leveledUp = true;
+    }
+    if (state.account.level >= 100) {
+        state.account.level = 100;
+        state.account.xp = state.account.xpToNextLevel;
     }
     return { leveledUp, level: state.account.level, xp: state.account.xp, xpToNextLevel: state.account.xpToNextLevel, gained: finalAmount };
 }
@@ -898,15 +961,28 @@ export function addHeroXP(heroId, amount) {
     if (!hero) return null;
     const mult = globalSettings.xpMultiplier || 1.0;
     const finalAmount = Math.max(1, Math.round(amount * mult));
+
+    if (hero.level >= 100) {
+        hero.level = 100;
+        hero.xp = hero.xpNext || hero.xpToNextLevel || 1000;
+        return { leveledUp: false, hero, gained: finalAmount };
+    }
+
     hero.xp += finalAmount;
     let leveledUp = false;
-    while (hero.xp >= hero.xpNext) {
-        hero.xp -= hero.xpNext;
+    while (hero.level < 100 && hero.xp >= (hero.xpNext || hero.xpToNextLevel || 100)) {
+        const needed = hero.xpNext || hero.xpToNextLevel || 100;
+        hero.xp -= needed;
         hero.level += 1;
         hero.xpNext = Math.floor(hero.level * 100 * 1.3);
-        hero.statPoints = (hero.statPoints || 0) + 2; // +2 pontos de atributos
-        hero.talentPoints = (hero.talentPoints || 0) + 1; // +1 Ponto de Talento D&D 5e
+        hero.xpToNextLevel = hero.xpNext;
+        hero.statPoints = (hero.statPoints || 0) + 3; // +3 pontos de atributos por nível
+        hero.talentPoints = (hero.talentPoints || 0) + (hero.level % 2 === 0 ? 1 : 0); // +1 talento a cada 2 níveis
         leveledUp = true;
+    }
+    if (hero.level >= 100) {
+        hero.level = 100;
+        hero.xp = hero.xpNext;
     }
     saveState();
     return { leveledUp, hero, gained: finalAmount };
@@ -1225,15 +1301,18 @@ export function resetState() {
 
 export function setGMState() {
     for (let key in state.resources) state.resources[key] = 999999;
-    for (let key in state.buildings) state.buildings[key] = 10;
+    for (let key in state.buildings) state.buildings[key] = 20;
     state.resources.diamonds = 999999;
     state.pop.max = 100;
     state.pop.idle = 100;
     state.tempPop.idle = 100;
-    state.account = { level: 10, xp: 0, xpToNextLevel: 1000 };
+    state.account = { level: 100, xp: 0, xpToNextLevel: Math.floor(100 * 100 * 1.25) };
     if (!state.unlockedHeroes) state.unlockedHeroes = {};
     for (let h in HERO_TEMPLATES) {
         state.unlockedHeroes[h] = JSON.parse(JSON.stringify(HERO_TEMPLATES[h]));
+        state.unlockedHeroes[h].level = 100;
+        state.unlockedHeroes[h].statPoints = 300;
+        state.unlockedHeroes[h].talentPoints = 50;
     }
     state.activeHeroId = 'sword';
 }
@@ -1338,6 +1417,50 @@ export async function loadState(uid) {
             console.log("Nenhum save encontrado para", uid, "- Iniciando nova vila e gravando na nuvem...");
             state = JSON.parse(JSON.stringify(DEFAULT_STATE));
             currentUserUid = uid;
+            await saveState();
+        }
+    }
+
+    // Auto-recuperação de conta: Se a vila estiver no estado inicial/zerada (nível 1, recursos padrão),
+    // vasculha backups locais de sessões anteriores na máquina para resgatar o progresso do jogador
+    const isStateBarebones = (state.account?.level || 1) <= 1 && (state.resources?.gold || 0) <= 20 && (state.buildings?.quartel || 0) === 0;
+    if (isStateBarebones) {
+        let bestBackup = null;
+        let bestScore = 0;
+        try {
+            for (let i = 0; i < localStorage.length; i++) {
+                const k = localStorage.key(i);
+                if (k && k.startsWith('felineas_backup_') && k !== `felineas_backup_${uid}`) {
+                    const raw = localStorage.getItem(k);
+                    if (raw) {
+                        const parsed = JSON.parse(raw);
+                        const lvl = parsed.account?.level || 1;
+                        const gold = parsed.resources?.gold || 0;
+                        const bldgsSum = Object.values(parsed.buildings || {}).reduce((a, b) => a + (typeof b === 'number' ? b : 0), 0);
+                        const score = (lvl * 1000) + gold + (bldgsSum * 50);
+                        if (score > 250 && score > bestScore) {
+                            bestScore = score;
+                            bestBackup = parsed;
+                        }
+                    }
+                }
+            }
+        } catch(scanErr) {
+            console.warn("Aviso ao buscar backups anteriores para auto-recuperação:", scanErr);
+        }
+
+        if (bestBackup) {
+            console.log("🌟 Progresso anterior encontrado no navegador! Recuperando automaticamente para a conta:", uid);
+            state.resources = { ...state.resources, ...(bestBackup.resources || {}) };
+            state.buildings = { ...state.buildings, ...(bestBackup.buildings || {}) };
+            state.pop = { ...state.pop, ...(bestBackup.pop || {}) };
+            state.account = { ...state.account, ...(bestBackup.account || {}) };
+            if (bestBackup.levelMissions) state.levelMissions = { ...state.levelMissions, ...bestBackup.levelMissions };
+            if (bestBackup.missions) state.missions = { ...state.missions, ...bestBackup.missions };
+            if (bestBackup.army) state.army = { ...state.army, ...bestBackup.army };
+            if (Array.isArray(bestBackup.inventory) && bestBackup.inventory.length > 0) state.inventory = [...bestBackup.inventory];
+            if (bestBackup.unlockedHeroes && Object.keys(bestBackup.unlockedHeroes).length > 0) state.unlockedHeroes = { ...bestBackup.unlockedHeroes };
+            if (bestBackup.tower) state.tower = { ...state.tower, ...bestBackup.tower };
             await saveState();
         }
     }
@@ -1637,8 +1760,15 @@ export async function getAllAccounts() {
         console.warn('Erro ao carregar felineas_registered_accounts:', e);
     }
 
-    // Contas genuínas do reino
-    const accountsArray = Array.from(accountsMap.values()).filter(acc => !acc.uid.startsWith('vila_'));
+    // Contas genuínas e registradas do reino (exclui vila_ e contas temporárias do modo rápido)
+    const accountsArray = Array.from(accountsMap.values()).filter(acc => {
+        if (!acc || !acc.uid) return false;
+        if (acc.uid.startsWith('vila_')) return false;
+        // Não listar contas de teste rápido / convidados
+        if (acc.uid === 'convidado_teste' || acc.uid === 'jogador_teste' || acc.uid.startsWith('jogador_teste')) return false;
+        if (acc.email && acc.email.endsWith('@felineas.local') && !acc.isAdmin && acc.uid !== 'gm') return false;
+        return true;
+    });
     accountsArray.meta = meta;
     return accountsArray;
 }

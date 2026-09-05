@@ -793,27 +793,78 @@ export function renderLevelMissions() {
 
 function checkMissions() {
     const state = getState();
+    if (!state.missions) return;
     let changed = false;
-    if (state.missions?.cabanaLvl2 && !state.missions.cabanaLvl2.done && state.buildings.cabana >= 2 && !state.missions.cabanaLvl2.ready) {
-        state.missions.cabanaLvl2.ready = true; changed = true;
-    }
-    if (state.missions?.caisLvl1 && !state.missions.caisLvl1.done && state.buildings.cais >= 1 && !state.missions.caisLvl1.ready) {
-        state.missions.caisLvl1.ready = true; changed = true;
-    }
-    if (state.missions?.quartelLvl1 && !state.missions.quartelLvl1.done && state.buildings.quartel >= 1 && !state.missions.quartelLvl1.ready) {
-        state.missions.quartelLvl1.ready = true; changed = true;
-    }
-    if (state.missions?.towerFloor1 && !state.missions.towerFloor1.done && (state.tower?.highestFloor || 1) >= 2 && !state.missions.towerFloor1.ready) {
-        state.missions.towerFloor1.ready = true; changed = true;
-    }
-    const totalTroopsCount = Object.values(state.army || {}).reduce((a, b) => a + b, 0);
-    if (state.missions?.trainArmy5 && !state.missions.trainArmy5.done && totalTroopsCount >= 5 && !state.missions.trainArmy5.ready) {
-        state.missions.trainArmy5.ready = true; changed = true;
-    }
+
+    const totalTroopsCount = Object.values(state.army || {}).reduce((a, b) => a + (typeof b === 'number' ? b : 0), 0);
     const hasAnyEquipped = Object.values(state.unlockedHeroes || {}).some(h => Object.values(h.equipped || {}).some(Boolean));
-    if (state.missions?.equipItem1 && !state.missions.equipItem1.done && hasAnyEquipped && !state.missions.equipItem1.ready) {
-        state.missions.equipItem1.ready = true; changed = true;
+    const highestHeroLevel = Math.max(1, ...Object.values(state.unlockedHeroes || {}).map(h => h.level || 1));
+    const heroesCount = Object.keys(state.unlockedHeroes || {}).length;
+    const towerFloor = state.tower?.highestFloor || 1;
+    const accountLvl = state.account?.level || 1;
+    const goldCount = state.resources?.gold || 0;
+    const popMax = state.pop?.max || 0;
+
+    const missionConditions = {
+        // Marco Inicial
+        cabanaLvl2: () => (state.buildings?.cabana || 0) >= 2,
+        caisLvl1: () => (state.buildings?.cais || 0) >= 1,
+        arranhadorLvl1: () => (state.buildings?.arranhador || 0) >= 1,
+        minaLvl1: () => (state.buildings?.mina || 0) >= 1,
+        quartelLvl1: () => (state.buildings?.quartel || 0) >= 1,
+        mercadoLvl1: () => (state.buildings?.mercado || 0) >= 1,
+        prefeituraLvl1: () => (state.buildings?.prefeitura || 0) >= 1,
+        trainArmy5: () => totalTroopsCount >= 5,
+        equipItem1: () => hasAnyEquipped,
+        towerFloor1: () => towerFloor >= 2,
+
+        // Marco Intermediário
+        cabanaLvl5: () => (state.buildings?.cabana || 0) >= 5,
+        caisLvl3: () => (state.buildings?.cais || 0) >= 3,
+        arranhadorLvl3: () => (state.buildings?.arranhador || 0) >= 3,
+        minaLvl3: () => (state.buildings?.mina || 0) >= 3,
+        quartelLvl3: () => (state.buildings?.quartel || 0) >= 3,
+        trainArmy15: () => totalTroopsCount >= 15,
+        towerFloor5: () => towerFloor >= 6,
+        popTotal10: () => popMax >= 10,
+        goldHoard500: () => goldCount >= 500,
+        heroLevel5: () => highestHeroLevel >= 5,
+        twoHeroes: () => heroesCount >= 2,
+
+        // Marco Avançado
+        cabanaLvl10: () => (state.buildings?.cabana || 0) >= 10,
+        quartelLvl5: () => (state.buildings?.quartel || 0) >= 5,
+        minaLvl5: () => (state.buildings?.mina || 0) >= 5,
+        towerFloor10: () => towerFloor >= 11,
+        trainArmy30: () => totalTroopsCount >= 30,
+        popTotal20: () => popMax >= 20,
+        goldHoard2000: () => goldCount >= 2000,
+        heroLevel10: () => highestHeroLevel >= 10,
+        threeHeroes: () => heroesCount >= 3,
+
+        // Marco Épico / Lendário
+        cabanaLvl20: () => (state.buildings?.cabana || 0) >= 20,
+        towerFloor20: () => towerFloor >= 21,
+        towerFloor30: () => towerFloor >= 31,
+        trainArmy50: () => totalTroopsCount >= 50,
+        goldHoard5000: () => goldCount >= 5000,
+        heroLevel25: () => highestHeroLevel >= 25,
+        heroLevel50: () => highestHeroLevel >= 50,
+        accountLevel50: () => accountLvl >= 50,
+        accountLevel100: () => accountLvl >= 100
+    };
+
+    for (const [key, checker] of Object.entries(missionConditions)) {
+        if (state.missions[key] && !state.missions[key].done && !state.missions[key].ready) {
+            try {
+                if (checker()) {
+                    state.missions[key].ready = true;
+                    changed = true;
+                }
+            } catch (err) {}
+        }
     }
+
     if (changed || !document.getElementById('mission-container')?.hasChildNodes()) {
         renderMissions();
     }

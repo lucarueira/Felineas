@@ -1,4 +1,4 @@
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile, updatePassword, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile, updatePassword, sendPasswordResetEmail, confirmPasswordReset, verifyPasswordResetCode } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
 import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
 import { auth, db } from './firebase-config.js';
 import { getState, resetState, setGMState, loadState, saveState, updateProfileState, loadGlobalSettings, loadCustomItems, addGMLog, getRichestVillagesRanking } from './state.js';
@@ -32,6 +32,109 @@ function initAuth() {
         btnCloseBanned.addEventListener('click', () => {
             modalBanned.style.display = 'none';
         });
+    }
+
+    // --- Purga Automática de Contas Temporárias do Modo Rápido ---
+    try {
+        const rawCreds = localStorage.getItem('felineas_registered_accounts');
+        if (rawCreds) {
+            const parsed = JSON.parse(rawCreds);
+            let modified = false;
+            for (const k of Object.keys(parsed)) {
+                if (k.endsWith('@felineas.local') || k === 'convidado_teste' || k === 'jogador_teste' || (parsed[k] && parsed[k].uid && (parsed[k].uid === 'convidado_teste' || parsed[k].uid.startsWith('jogador_teste')))) {
+                    delete parsed[k];
+                    modified = true;
+                }
+            }
+            if (modified) {
+                localStorage.setItem('felineas_registered_accounts', JSON.stringify(parsed));
+            }
+        }
+    } catch(e) {}
+
+    // --- Verificador de Link de Redefinição de Senha do Firebase (Action URL) ---
+    const urlParams = new URLSearchParams(window.location.search);
+    const authMode = urlParams.get('mode');
+    const authActionCode = urlParams.get('oobCode');
+
+    const modalResetPwd = document.getElementById('modal-reset-password');
+    const formResetPwd = document.getElementById('form-reset-password');
+    const inputResetNew = document.getElementById('reset-new-password');
+    const inputResetConfirm = document.getElementById('reset-confirm-password');
+    const resetFeedback = document.getElementById('reset-pwd-feedback');
+    const btnCloseResetPwd = document.getElementById('btn-close-reset-pwd');
+    const btnCancelResetPwd = document.getElementById('btn-cancel-reset-pwd');
+
+    function closeResetModal() {
+        if (modalResetPwd) modalResetPwd.style.display = 'none';
+        if (window.history.replaceState) {
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+    }
+
+    if (btnCloseResetPwd) btnCloseResetPwd.addEventListener('click', closeResetModal);
+    if (btnCancelResetPwd) btnCancelResetPwd.addEventListener('click', closeResetModal);
+
+    if (authMode === 'resetPassword' && authActionCode && modalResetPwd) {
+        verifyPasswordResetCode(auth, authActionCode)
+            .then(email => {
+                modalResetPwd.style.display = 'flex';
+                if (catEmailInput) catEmailInput.value = email;
+            })
+            .catch(err => {
+                console.warn("Código de redefinição de senha inválido:", err);
+                showError("O link de redefinição de senha expirou ou já foi utilizado. Solicite um novo link se precisar alterar a senha.");
+            });
+
+        if (formResetPwd) {
+            formResetPwd.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const newP = inputResetNew ? inputResetNew.value : '';
+                const confP = inputResetConfirm ? inputResetConfirm.value : '';
+
+                if (newP.length < 6) {
+                    if (resetFeedback) {
+                        resetFeedback.textContent = "A senha deve ter pelo menos 6 caracteres.";
+                        resetFeedback.style.color = '#d9534f';
+                        resetFeedback.style.display = 'block';
+                    }
+                    return;
+                }
+                if (newP !== confP) {
+                    if (resetFeedback) {
+                        resetFeedback.textContent = "As senhas não coincidem. Digite a mesma senha em ambos os campos.";
+                        resetFeedback.style.color = '#d9534f';
+                        resetFeedback.style.display = 'block';
+                    }
+                    return;
+                }
+
+                const btnConfirm = document.getElementById('btn-confirm-reset-pwd');
+                if (btnConfirm) { btnConfirm.disabled = true; btnConfirm.textContent = 'Salvando...'; }
+
+                confirmPasswordReset(auth, authActionCode, newP)
+                    .then(() => {
+                        if (resetFeedback) {
+                            resetFeedback.textContent = "✅ Senha alterada com sucesso! Você já pode entrar com seu e-mail e nova senha.";
+                            resetFeedback.style.color = 'var(--success)';
+                            resetFeedback.style.display = 'block';
+                        }
+                        if (catSecretInput) catSecretInput.value = newP;
+                        setTimeout(() => {
+                            closeResetModal();
+                            if (btnLogin) btnLogin.focus();
+                        }, 1800);
+                    })
+                    .catch(err => {
+                        if (btnConfirm) { btnConfirm.disabled = false; btnConfirm.textContent = 'Salvar Nova Senha'; }
+                        if (resetFeedback) {
+                            resetFeedback.textContent = "Erro ao salvar nova senha: " + (err.message || err.code);
+                            resetFeedback.style.color = '#d9534f';
+                            resetFeedback.style.display = 'block';
+                        }
+                    });
+            });
+        }
     }
 
     // --- GM Panel Direct Switch Function ---
@@ -511,47 +614,24 @@ function initAuth() {
     if (forgotPwdBtn) {
         forgotPwdBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            const email = catEmailInput.value;
+            const email = catEmailInput.value ? catEmailInput.value.trim() : '';
             if (!email) {
-                showError("Digite seu e-mail no campo acima para redefinir o segredo.");
+                showError("Digite seu e-mail no campo acima para enviarmos o link de redefinição de senha.");
                 return;
             }
             sendPasswordResetEmail(auth, email)
                 .then(() => {
-                    alert("E-mail de redefinição de segredo enviado para " + email);
+                    alert("📧 E-mail de redefinição de segredo enviado para:\n" + email + "\n\nAbra sua caixa de entrada e clique no link para definir sua nova senha. Em seguida, volte aqui e entre com ela!");
                 })
                 .catch((error) => {
-                    showError("Erro ao redefinir segredo: " + error.message);
+                    if (error.code === 'auth/unauthorized-domain') {
+                        showError("⚠️ O domínio do Netlify precisa ser adicionado no Console do Firebase (Authentication > Settings > Authorized Domains) para permitir envio de e-mails.", true);
+                    } else if (error.code === 'auth/user-not-found') {
+                        showError("Nenhuma conta felina encontrada com este e-mail.");
+                    } else {
+                        showError("Erro ao enviar e-mail de redefinição: " + error.message);
+                    }
                 });
-        });
-    }
-
-    // --- Botão de Acesso Rápido / Modo Teste / Convidado ---
-    const btnQuickGuest = document.getElementById('btn-quick-guest');
-    if (btnQuickGuest) {
-        btnQuickGuest.addEventListener('click', () => {
-            const rawName = catNameInput ? catNameInput.value.trim() : '';
-            const rawEmail = catEmailInput ? catEmailInput.value.trim() : '';
-            const name = rawName || (rawEmail ? rawEmail.split('@')[0] : 'Líder Felino');
-            const cleanKey = (name.toLowerCase().replace(/[^a-z0-9_]/g, '_') || 'teste');
-            const uid = 'jogador_' + cleanKey;
-
-            let registeredAccounts = {};
-            try {
-                registeredAccounts = JSON.parse(localStorage.getItem('felineas_registered_accounts') || '{}');
-            } catch(e) {}
-            registeredAccounts[uid + '@felineas.local'] = {
-                uid,
-                email: uid + '@felineas.local',
-                displayName: name,
-                role: 'player',
-                isAdmin: false
-            };
-            try {
-                localStorage.setItem('felineas_registered_accounts', JSON.stringify(registeredAccounts));
-            } catch(e) {}
-
-            enterAsTestPlayer(uid, name);
         });
     }
 
@@ -589,64 +669,66 @@ function initAuth() {
                 }
             }
 
-            // 2. Verificação de Contas Criadas pelo GM ou Registradas Localmente
-            if (localAcc && !localAcc.isAdmin) {
-                if (password === localAcc.password) {
-                    addGMLog('auth', 'Login Realizado', `Jogador "${localAcc.displayName}" (${emailLower}) entrou no reino.`, localAcc.displayName);
-                    enterAsTestPlayer(localAcc.uid, localAcc.displayName);
-                    loginForm.reset();
-                    return;
-                } else {
-                    showError("Senha incorreta.");
-                    return;
-                }
-            }
-
             const originalText = btnLogin.textContent;
             btnLogin.textContent = 'Afiando garras...';
             btnLogin.disabled = true;
 
+            // 2. Autenticação Primária Oficial no Firebase Auth
             signInWithEmailAndPassword(auth, email, password)
                 .then(async (userCredential) => {
                     btnLogin.textContent = originalText;
                     btnLogin.disabled = false;
+                    hideError();
                     loginForm.reset();
+
+                    // Sincroniza senha nova no cache local para nunca divergir
+                    try {
+                        let regAccs = JSON.parse(localStorage.getItem('felineas_registered_accounts') || '{}');
+                        regAccs[emailLower] = {
+                            uid: userCredential.user.uid,
+                            email: emailLower,
+                            password: password,
+                            displayName: userCredential.user.displayName || emailLower,
+                            role: 'player',
+                            isAdmin: false
+                        };
+                        localStorage.setItem('felineas_registered_accounts', JSON.stringify(regAccs));
+                    } catch(e) {}
+
                     const uName = userCredential.user.displayName || emailLower;
                     await addGMLog('auth', 'Login Realizado', `Jogador "${uName}" entrou no reino online.`, uName);
                 })
                 .catch((error) => {
                     btnLogin.textContent = originalText;
                     btnLogin.disabled = false;
-                    console.warn("Aviso Firebase no login (permitindo fallback):", error);
+                    console.warn("Aviso Firebase no login:", error);
 
-                    const cleanName = (catNameInput && catNameInput.value.trim()) || email.split('@')[0] || 'Líder Felino';
-                    const fallbackUid = 'jogador_' + emailLower.replace(/[^a-z0-9_]/g, '_');
-
-                    // Salva a conta localmente para que futuros logins com esta senha funcionem direto
-                    try {
-                        registeredAccounts[emailLower] = {
-                            uid: fallbackUid,
-                            email: emailLower,
-                            password: password,
-                            displayName: cleanName,
-                            role: 'player',
-                            isAdmin: false
-                        };
-                        localStorage.setItem('felineas_registered_accounts', JSON.stringify(registeredAccounts));
-                    } catch(e) {}
-
-                    showError(`
-                        <div style="margin-bottom: 8px;">Credenciais offline salvas (${error.code || 'modo local'}).</div>
-                        <button type="button" id="btn-fallback-test-login" class="btn" style="background: linear-gradient(135deg, #10b981, #059669); color: #fff; font-size: 0.9rem; font-weight: bold; padding: 10px 14px; border: none; border-radius: 8px; cursor: pointer; width: 100%; box-shadow: 0 4px 12px rgba(16,185,129,0.3);">
-                            🎮 Entrar com "${cleanName}" no Modo Teste
-                        </button>
-                    `, true);
-
-                    const fallbackBtn = document.getElementById('btn-fallback-test-login');
-                    if (fallbackBtn) {
-                        fallbackBtn.addEventListener('click', () => {
-                            enterAsTestPlayer(fallbackUid, cleanName);
-                        });
+                    if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+                        showError("Senha incorreta. Se você alterou sua senha recentemente pelo e-mail, digite a nova senha.");
+                    } else if (error.code === 'auth/user-not-found') {
+                        showError("Nenhuma conta encontrada com este e-mail. Clique no botão 'Cadastrar-se' para criar sua conta oficial.");
+                    } else if (error.code === 'auth/unauthorized-domain') {
+                        showError(`
+                            ⚠️ <strong>Domínio não autorizado no Firebase Auth!</strong><br>
+                            <span style="font-size: 0.85rem; font-weight: normal;">Acesse o <strong>Firebase Console</strong> &gt; Authentication &gt; Configurações (Settings) &gt; <strong>Domínios Autorizados</strong> e adicione o endereço deste site (ex: seu-site.netlify.app).</span>
+                        `, true);
+                    } else if (error.code === 'auth/invalid-email') {
+                        showError("Formato de e-mail inválido. Digite um e-mail válido (ex: seu_nome@email.com).");
+                    } else if (error.code === 'auth/too-many-requests') {
+                        showError("Muitas tentativas sem sucesso. Por segurança, aguarde alguns instantes antes de tentar novamente.");
+                    } else if (error.code === 'auth/network-request-failed') {
+                        // Fallback somente se não houver conexão de rede E houver credencial registrada que bata com a senha
+                        if (localAcc && localAcc.password === password) {
+                            showError("Rede indisponível: Conectando com a conta local offline...");
+                            setTimeout(() => {
+                                enterAsTestPlayer(localAcc.uid, localAcc.displayName);
+                                loginForm.reset();
+                            }, 800);
+                        } else {
+                            showError("Falha na conexão com os servidores do reino. Verifique sua conexão com a internet.");
+                        }
+                    } else {
+                        showError(`Erro ao entrar: ${error.message || error.code}`);
                     }
                 });
         });
@@ -666,6 +748,11 @@ function initAuth() {
                 return;
             }
 
+            if(password.length < 6) {
+                showError("O segredo (senha) deve conter no mínimo 6 caracteres.");
+                return;
+            }
+
             const originalText = btnRegister.textContent;
             btnRegister.textContent = 'Criando conta...';
             btnRegister.disabled = true;
@@ -675,6 +762,21 @@ function initAuth() {
                     await updateProfile(userCredential.user, {
                         displayName: name
                     });
+
+                    // Registra a conta nos dados locais para sincronização
+                    try {
+                        let regAccs = JSON.parse(localStorage.getItem('felineas_registered_accounts') || '{}');
+                        regAccs[email.toLowerCase()] = {
+                            uid: userCredential.user.uid,
+                            email: email.toLowerCase(),
+                            password: password,
+                            displayName: name,
+                            role: 'player',
+                            isAdmin: false
+                        };
+                        localStorage.setItem('felineas_registered_accounts', JSON.stringify(regAccs));
+                    } catch(e) {}
+
                     // Salva a vila no Firestore imediatamente com o nome correto
                     await saveState();
                     updateProfileCardUI(userCredential.user);
@@ -688,26 +790,22 @@ function initAuth() {
                 .catch((error) => {
                     btnRegister.textContent = originalText;
                     btnRegister.disabled = false;
-                    console.warn("Aviso Firebase no cadastro (registrando localmente):", error);
+                    console.warn("Aviso Firebase no cadastro:", error);
 
-                    // Registra localmente sem travar o teste
-                    const emailLower = email.toLowerCase();
-                    const regUid = 'jogador_' + emailLower.replace(/[^a-z0-9_]/g, '_');
-                    try {
-                        const creds = JSON.parse(localStorage.getItem('felineas_registered_accounts') || '{}');
-                        creds[emailLower] = {
-                            uid: regUid,
-                            email: emailLower,
-                            password: password,
-                            displayName: name,
-                            role: 'player',
-                            isAdmin: false
-                        };
-                        localStorage.setItem('felineas_registered_accounts', JSON.stringify(creds));
-                    } catch(e) {}
-
-                    enterAsTestPlayer(regUid, name);
-                    loginForm.reset();
+                    if (error.code === 'auth/email-already-in-use') {
+                        showError("Este e-mail já está cadastrado no reino! Entre com sua senha ou clique em 'Esqueceu o Segredo?' para recuperá-la.");
+                    } else if (error.code === 'auth/weak-password') {
+                        showError("O segredo escolhido é fraco. Digite uma senha com pelo menos 6 caracteres.");
+                    } else if (error.code === 'auth/invalid-email') {
+                        showError("Formato de e-mail inválido. Verifique o endereço digitado.");
+                    } else if (error.code === 'auth/unauthorized-domain') {
+                        showError(`
+                            ⚠️ <strong>Domínio não autorizado no Firebase!</strong><br>
+                            <span style="font-size: 0.85rem; font-weight: normal;">Acesse o <strong>Firebase Console</strong> &gt; Authentication &gt; Configurações (Settings) &gt; <strong>Domínios Autorizados</strong> e adicione o endereço deste site (ex: seu-site.netlify.app).</span>
+                        `, true);
+                    } else {
+                        showError(`Erro ao registrar conta: ${error.message || error.code}`);
+                    }
                 });
         });
     }
