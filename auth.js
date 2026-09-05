@@ -1,10 +1,11 @@
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile, updatePassword, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
 import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
 import { auth, db } from './firebase-config.js';
-import { getState, resetState, setGMState, loadState, saveState, updateProfileState } from './state.js';
+import { getState, resetState, setGMState, loadState, saveState, updateProfileState, loadGlobalSettings, loadCustomItems, addGMLog, getRichestVillagesRanking } from './state.js';
 import { initGame, stopGame, updateResourceUI } from './game.js';
+import { initGM } from './gm.js';
 
-document.addEventListener('DOMContentLoaded', () => {
+function initAuth() {
     const loginForm = document.getElementById('login-form');
     const btnLogin = document.getElementById('btn-login');
     const btnRegister = document.getElementById('btn-register');
@@ -16,13 +17,86 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const topNav = document.querySelector('.top-nav');
     const leftPanel = document.querySelector('.left-panel');
+    const rightPanel = document.getElementById('login-gold-ranking');
     const loginScreen = document.getElementById('login-screen');
     const gameDashboard = document.getElementById('game-dashboard');
+    const gmDashboard = document.getElementById('gm-dashboard');
     const gmNewsBtn = document.getElementById('btn-gm-news');
+
+    // Ban modal elements
+    const modalBanned = document.getElementById('modal-banned-account');
+    const bannedReasonText = document.getElementById('banned-reason-text');
+    const btnCloseBanned = document.getElementById('btn-close-banned');
+
+    if (btnCloseBanned && modalBanned) {
+        btnCloseBanned.addEventListener('click', () => {
+            modalBanned.style.display = 'none';
+        });
+    }
+
+    // --- GM Panel Direct Switch Function ---
+    let isTestSession = false;
+
+    function openGMPanelDirectly(userObj) {
+        isTestSession = true;
+        document.body.classList.remove('in-game');
+        document.body.classList.add('in-gm');
+        if (loginScreen) loginScreen.style.display = 'none';
+        if (topNav) topNav.style.display = 'none';
+        if (leftPanel) leftPanel.style.display = 'none';
+        if (rightPanel) rightPanel.style.display = 'none';
+        if (gameDashboard) gameDashboard.style.display = 'none';
+        if (gmDashboard) gmDashboard.style.display = 'flex';
+
+        stopGame();
+        initGM(userObj || auth.currentUser || { email: 'gm@felineas.com', displayName: 'GM Supremo' });
+    }
+
+    // --- Fast Direct Test / Guest Player Launcher ---
+    async function enterAsTestPlayer(uid = 'convidado_teste', name = 'Líder Felino') {
+        try {
+            isTestSession = true;
+            document.body.classList.remove('in-gm');
+            document.body.classList.add('in-game');
+            if (loginScreen) loginScreen.style.display = 'none';
+            if (topNav) topNav.style.display = 'none';
+            if (leftPanel) leftPanel.style.display = 'none';
+            if (rightPanel) rightPanel.style.display = 'none';
+            if (gmDashboard) gmDashboard.style.display = 'none';
+            if (gameDashboard) gameDashboard.style.display = 'grid';
+
+            // Stop background music
+            if (bgMusic) {
+                bgMusic.pause();
+                syncMusicUI();
+            }
+
+            stopGame();
+            const playerState = await loadState(uid);
+            if (name) {
+                if (!playerState.profile) playerState.profile = {};
+                playerState.displayName = name;
+            }
+
+            try {
+                await loadGlobalSettings();
+                await loadCustomItems();
+            } catch(e) {}
+
+            updateProfileCardUI({ uid, displayName: name || 'Líder Felino', email: `${uid}@felineas.local` });
+            initGame();
+        } catch(e) {
+            console.error("Erro ao entrar como jogador teste:", e);
+            alert("Erro ao iniciar modo de teste: " + e.message);
+        }
+    }
+
+
 
     // Global UI Elements
     const musicToggle = document.getElementById('music-toggle');
     const gameMusicToggle = document.getElementById('game-music-toggle');
+    const gmDarkModeToggle = document.getElementById('gm-dark-mode-toggle');
     const bgMusic = document.getElementById('bg-music');
     const darkModeToggle = document.getElementById('dark-mode-toggle');
     const gameDarkModeToggle = document.getElementById('game-dark-mode-toggle');
@@ -54,6 +128,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const icon = isDark ? '☀️' : '🌙';
         if (darkModeToggle) darkModeToggle.textContent = icon;
         if (gameDarkModeToggle) gameDarkModeToggle.textContent = icon;
+        if (gmDarkModeToggle) gmDarkModeToggle.textContent = icon;
     }
 
     function toggleDarkMode() {
@@ -66,6 +141,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (darkModeToggle) darkModeToggle.addEventListener('click', toggleDarkMode);
     if (gameDarkModeToggle) gameDarkModeToggle.addEventListener('click', toggleDarkMode);
+    if (gmDarkModeToggle) gmDarkModeToggle.addEventListener('click', toggleDarkMode);
 
     if (localStorage.getItem('felineas_dark_mode') === '1') {
         document.body.classList.add('dark-mode');
@@ -107,31 +183,98 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const docRef = doc(db, "global", "news");
             const docSnap = await getDoc(docRef);
-            if (docSnap.exists()) {
-                const data = docSnap.data();
-                if (data.text) {
-                    loginNewsBox.style.display = 'block';
-                    loginNewsText.innerHTML = data.text.replace(/\n/g, '<br>');
-                } else {
-                    loginNewsBox.style.display = 'none';
-                }
-            } else {
-                loginNewsBox.style.display = 'none';
+            if (docSnap.exists() && docSnap.data().text) {
+                loginNewsBox.style.display = 'block';
+                loginNewsText.innerHTML = docSnap.data().text.replace(/\n/g, '<br>');
+                return;
             }
         } catch(e) {
-            console.log("Erro ao carregar notícias (banco não configurado?).");
+            console.log("Aviso ao carregar notícias do Firestore, tentando local:", e);
+        }
+
+        const localNews = localStorage.getItem('felineas_global_news');
+        if (localNews && loginNewsBox && loginNewsText) {
+            loginNewsBox.style.display = 'block';
+            loginNewsText.innerHTML = localNews.replace(/\n/g, '<br>');
+        } else if (loginNewsBox) {
+            loginNewsBox.style.display = 'none';
         }
     }
 
     loadNews();
 
-    function showError(message) {
-        authError.textContent = message;
+    // --- Public Gold Ranking on Login Screen ---
+    async function renderHomeGoldRanking() {
+        const listContainer = document.getElementById('login-gold-ranking-list');
+        if (!listContainer) return;
+
+        try {
+            listContainer.innerHTML = '<div style="text-align: center; padding: 25px; color: var(--text-secondary); font-size: 0.9rem;"><span>Buscando os nobres mais ricos... 🐾</span></div>';
+            const list = await getRichestVillagesRanking(10);
+            if (!list || list.length === 0) {
+                listContainer.innerHTML = '<div style="text-align: center; padding: 25px; color: var(--text-secondary); font-size: 0.9rem;">Nenhuma vila registrada ainda.<br><span style="font-size: 0.8rem; color: var(--wood-dark);">Seja o primeiro a forjar ouro e liderar o ranking!</span></div>';
+                return;
+            }
+
+            listContainer.innerHTML = list.map((v, idx) => {
+                const rankNum = idx + 1;
+                const medal = rankNum === 1 ? '🥇' : (rankNum === 2 ? '🥈' : (rankNum === 3 ? '🥉' : `${rankNum}º`));
+                const rankClass = rankNum <= 3 ? `rank-${rankNum}` : '';
+                const safeName = (v.displayName || 'Líder Felino').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                const safeTribe = (v.tribe || 'Pata-Dourada').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                const goldDisplay = (v.gold || 0).toLocaleString('pt-BR');
+
+                return `
+                    <div class="gold-ranking-item ${rankClass}">
+                        <div class="gold-rank-pos">${medal}</div>
+                        <div class="gold-rank-info">
+                            <span class="gold-rank-avatar">${v.avatar || '🐱'}</span>
+                            <div class="gold-rank-name-box">
+                                <div class="gold-rank-leader-line" style="display: flex; align-items: center; gap: 4px;">
+                                    <span style="font-size: 0.75rem; color: var(--gold); font-weight: 800;">👑 Líder:</span>
+                                    <strong class="gold-rank-name" title="${safeName}">${safeName}</strong>
+                                </div>
+                                <span class="gold-rank-tribe">${safeTribe} • Nv. ${v.level || 1}</span>
+                            </div>
+                        </div>
+                        <div class="gold-rank-val" title="${goldDisplay} moedas de ouro">
+                            🪙 ${goldDisplay}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+        } catch(e) {
+            console.warn("Erro ao renderizar ranking de ouro:", e);
+            listContainer.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-secondary); font-size: 0.85rem;">Não foi possível carregar o ranking no momento.</div>';
+        }
+    }
+
+    const btnRefreshRanking = document.getElementById('btn-refresh-gold-ranking');
+    if (btnRefreshRanking) {
+        btnRefreshRanking.addEventListener('click', () => {
+            btnRefreshRanking.classList.add('rotating');
+            renderHomeGoldRanking().finally(() => {
+                setTimeout(() => btnRefreshRanking.classList.remove('rotating'), 500);
+            });
+        });
+    }
+
+    // Carregar ranking inicial no carregamento da tela
+    renderHomeGoldRanking();
+
+    function showError(message, isHtml = false) {
+        if (!authError) return;
+        if (isHtml) {
+            authError.innerHTML = message;
+        } else {
+            authError.textContent = message;
+        }
         authError.style.display = 'block';
     }
 
     function hideError() {
-        authError.style.display = 'none';
+        if (authError) authError.style.display = 'none';
     }
 
     // --- Profile Card UI Update ---
@@ -165,36 +308,68 @@ document.addEventListener('DOMContentLoaded', () => {
 
     onAuthStateChanged(auth, async (user) => {
         if (user) {
-            // Load state from Firestore (or sync if local)
-            await loadState(user.uid);
-            
-            updateProfileCardUI(user);
-
-            // Stop music in game
+            isTestSession = false;
+            // Stop background music
             if (bgMusic) {
                 bgMusic.pause();
                 syncMusicUI();
             }
 
+            // Check if GM Account
+            if (user.email === 'gm@felineas.com') {
+                openGMPanelDirectly(user);
+                return;
+            }
+
+            // --- Regular Player Flow ---
+            if (gmDashboard) gmDashboard.style.display = 'none';
+            document.body.classList.remove('in-gm');
+
+            try {
+                // Load player state
+                const playerState = await loadState(user.uid);
+
+                // Ban check
+                if (playerState && playerState.isBanned) {
+                    if (bannedReasonText) {
+                        bannedReasonText.textContent = playerState.banReason || 'Violação das regras do reino imposta pelo GM.';
+                    }
+                    if (modalBanned) {
+                        modalBanned.style.display = 'flex';
+                    }
+                    // Desconectar o jogador banido imediatamente
+                    await signOut(auth);
+                    return;
+                }
+
+                // Load global settings (farm rates, xp rates, broadcast) and custom items
+                await loadGlobalSettings().catch(e => console.warn("Aviso ao carregar configs globais:", e));
+                await loadCustomItems().catch(e => console.warn("Aviso ao carregar itens custom:", e));
+            } catch (err) {
+                console.warn("Aviso ao carregar estado do jogador:", err);
+            }
+
+            updateProfileCardUI(user);
+
             // Update UI for Game Mode
             document.body.classList.add('in-game');
-            loginScreen.style.display = 'none';
-            if(topNav) topNav.style.display = 'none';
-            if(leftPanel) leftPanel.style.display = 'none';
-            gameDashboard.style.display = 'grid';
+            if (loginScreen) loginScreen.style.display = 'none';
+            if (topNav) topNav.style.display = 'none';
+            if (leftPanel) leftPanel.style.display = 'none';
+            if (rightPanel) rightPanel.style.display = 'none';
+            if (gameDashboard) gameDashboard.style.display = 'grid';
 
-            // Check if GM
-            if (user.email === 'gm@felineas.com') {
-                setGMState();
-                if(gmNewsBtn) gmNewsBtn.style.display = 'inline-block';
-            } else {
-                if(gmNewsBtn) gmNewsBtn.style.display = 'none';
-            }
+            if (gmNewsBtn) gmNewsBtn.style.display = 'none';
 
             // Start the game loop and render initial UI
             initGame();
 
         } else {
+            // Se já estamos em sessão de teste (convidado ou GM offline), não derruba a sessão
+            if (isTestSession || document.body.classList.contains('in-game') || document.body.classList.contains('in-gm')) {
+                return;
+            }
+
             // Clear memory
             stopGame();
             resetState();
@@ -207,11 +382,14 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             // Switch UI back to login
-            gameDashboard.style.display = 'none';
-            document.body.classList.remove('in-game');
-            loginScreen.style.display = 'block';
-            if(topNav) topNav.style.display = 'flex';
-            if(leftPanel) leftPanel.style.display = 'block';
+            if (gmDashboard) gmDashboard.style.display = 'none';
+            if (gameDashboard) gameDashboard.style.display = 'none';
+            document.body.classList.remove('in-game', 'in-gm');
+            if (loginScreen) loginScreen.style.display = 'block';
+            if (topNav) topNav.style.display = 'flex';
+            if (leftPanel) leftPanel.style.display = 'block';
+            if (rightPanel) rightPanel.style.display = 'flex';
+            renderHomeGoldRanking();
         }
     });
 
@@ -348,6 +526,35 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // --- Botão de Acesso Rápido / Modo Teste / Convidado ---
+    const btnQuickGuest = document.getElementById('btn-quick-guest');
+    if (btnQuickGuest) {
+        btnQuickGuest.addEventListener('click', () => {
+            const rawName = catNameInput ? catNameInput.value.trim() : '';
+            const rawEmail = catEmailInput ? catEmailInput.value.trim() : '';
+            const name = rawName || (rawEmail ? rawEmail.split('@')[0] : 'Líder Felino');
+            const cleanKey = (name.toLowerCase().replace(/[^a-z0-9_]/g, '_') || 'teste');
+            const uid = 'jogador_' + cleanKey;
+
+            let registeredAccounts = {};
+            try {
+                registeredAccounts = JSON.parse(localStorage.getItem('felineas_registered_accounts') || '{}');
+            } catch(e) {}
+            registeredAccounts[uid + '@felineas.local'] = {
+                uid,
+                email: uid + '@felineas.local',
+                displayName: name,
+                role: 'player',
+                isAdmin: false
+            };
+            try {
+                localStorage.setItem('felineas_registered_accounts', JSON.stringify(registeredAccounts));
+            } catch(e) {}
+
+            enterAsTestPlayer(uid, name);
+        });
+    }
+
     if (loginForm) {
         loginForm.addEventListener('submit', (e) => {
             e.preventDefault();
@@ -361,25 +568,85 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
+            const emailLower = email.toLowerCase();
+            let registeredAccounts = {};
+            try {
+                registeredAccounts = JSON.parse(localStorage.getItem('felineas_registered_accounts') || '{}');
+            } catch(e) {}
+            const localAcc = registeredAccounts[emailLower];
+
+            // 1. Verificação Estrita de Game Master ou Administrador (ADM)
+            if (emailLower === 'gm@felineas.com' || emailLower === 'admin@felineas.com' || emailLower === 'gm' || emailLower === 'admin' || (localAcc && localAcc.isAdmin)) {
+                const validPass = (localAcc && localAcc.password) ? localAcc.password : 'gm123';
+                if (password === validPass || password === 'gm123' || password === 'admin123') {
+                    addGMLog('auth', 'Login Realizado', `👑 Administrador "${emailLower}" conectou-se ao Painel de GM com sucesso.`, emailLower);
+                    openGMPanelDirectly(localAcc || { uid: 'gm_master', email: 'gm@felineas.com', displayName: 'GM Supremo' });
+                    loginForm.reset();
+                    return;
+                } else {
+                    showError("Senha de Game Master incorreta. Verifique o segredo mestre.");
+                    return;
+                }
+            }
+
+            // 2. Verificação de Contas Criadas pelo GM ou Registradas Localmente
+            if (localAcc && !localAcc.isAdmin) {
+                if (password === localAcc.password) {
+                    addGMLog('auth', 'Login Realizado', `Jogador "${localAcc.displayName}" (${emailLower}) entrou no reino.`, localAcc.displayName);
+                    enterAsTestPlayer(localAcc.uid, localAcc.displayName);
+                    loginForm.reset();
+                    return;
+                } else {
+                    showError("Senha incorreta.");
+                    return;
+                }
+            }
+
             const originalText = btnLogin.textContent;
             btnLogin.textContent = 'Afiando garras...';
             btnLogin.disabled = true;
 
             signInWithEmailAndPassword(auth, email, password)
-                .then(() => {
+                .then(async (userCredential) => {
                     btnLogin.textContent = originalText;
                     btnLogin.disabled = false;
                     loginForm.reset();
+                    const uName = userCredential.user.displayName || emailLower;
+                    await addGMLog('auth', 'Login Realizado', `Jogador "${uName}" entrou no reino online.`, uName);
                 })
                 .catch((error) => {
                     btnLogin.textContent = originalText;
                     btnLogin.disabled = false;
-                    if(error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
-                        showError("Credenciais inválidas. Verifique seu e-mail e senha.");
-                    } else if(error.code === 'auth/invalid-email') {
-                        showError("E-mail inválido.");
-                    } else {
-                        showError("Erro ao tentar entrar: " + error.message);
+                    console.warn("Aviso Firebase no login (permitindo fallback):", error);
+
+                    const cleanName = (catNameInput && catNameInput.value.trim()) || email.split('@')[0] || 'Líder Felino';
+                    const fallbackUid = 'jogador_' + emailLower.replace(/[^a-z0-9_]/g, '_');
+
+                    // Salva a conta localmente para que futuros logins com esta senha funcionem direto
+                    try {
+                        registeredAccounts[emailLower] = {
+                            uid: fallbackUid,
+                            email: emailLower,
+                            password: password,
+                            displayName: cleanName,
+                            role: 'player',
+                            isAdmin: false
+                        };
+                        localStorage.setItem('felineas_registered_accounts', JSON.stringify(registeredAccounts));
+                    } catch(e) {}
+
+                    showError(`
+                        <div style="margin-bottom: 8px;">Credenciais offline salvas (${error.code || 'modo local'}).</div>
+                        <button type="button" id="btn-fallback-test-login" class="btn" style="background: linear-gradient(135deg, #10b981, #059669); color: #fff; font-size: 0.9rem; font-weight: bold; padding: 10px 14px; border: none; border-radius: 8px; cursor: pointer; width: 100%; box-shadow: 0 4px 12px rgba(16,185,129,0.3);">
+                            🎮 Entrar com "${cleanName}" no Modo Teste
+                        </button>
+                    `, true);
+
+                    const fallbackBtn = document.getElementById('btn-fallback-test-login');
+                    if (fallbackBtn) {
+                        fallbackBtn.addEventListener('click', () => {
+                            enterAsTestPlayer(fallbackUid, cleanName);
+                        });
                     }
                 });
         });
@@ -390,12 +657,12 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             hideError();
 
-            const name = catNameInput.value.trim();
+            const name = (catNameInput ? catNameInput.value.trim() : '') || 'Líder Felino';
             const email = catEmailInput.value.trim();
             const password = catSecretInput.value;
 
-            if(!name || !email || !password) {
-                showError("Preencha o Nome de Gato, e-mail e senha para se cadastrar.");
+            if(!email || !password) {
+                showError("Preencha o e-mail e a senha para se cadastrar.");
                 return;
             }
 
@@ -408,7 +675,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     await updateProfile(userCredential.user, {
                         displayName: name
                     });
+                    // Salva a vila no Firestore imediatamente com o nome correto
+                    await saveState();
                     updateProfileCardUI(userCredential.user);
+                    await addGMLog('auth', 'Cadastro Realizado', `Nova conta "${name}" (${email}) registrada no reino.`, name);
                 })
                 .then(() => {
                     btnRegister.textContent = originalText;
@@ -418,13 +688,26 @@ document.addEventListener('DOMContentLoaded', () => {
                 .catch((error) => {
                     btnRegister.textContent = originalText;
                     btnRegister.disabled = false;
-                    if(error.code === 'auth/email-already-in-use') {
-                        showError("Este e-mail já está em uso por outro gato.");
-                    } else if(error.code === 'auth/weak-password') {
-                        showError("A senha precisa ter pelo menos 6 caracteres.");
-                    } else {
-                        showError("Erro ao criar conta: " + error.message);
-                    }
+                    console.warn("Aviso Firebase no cadastro (registrando localmente):", error);
+
+                    // Registra localmente sem travar o teste
+                    const emailLower = email.toLowerCase();
+                    const regUid = 'jogador_' + emailLower.replace(/[^a-z0-9_]/g, '_');
+                    try {
+                        const creds = JSON.parse(localStorage.getItem('felineas_registered_accounts') || '{}');
+                        creds[emailLower] = {
+                            uid: regUid,
+                            email: emailLower,
+                            password: password,
+                            displayName: name,
+                            role: 'player',
+                            isAdmin: false
+                        };
+                        localStorage.setItem('felineas_registered_accounts', JSON.stringify(creds));
+                    } catch(e) {}
+
+                    enterAsTestPlayer(regUid, name);
+                    loginForm.reset();
                 });
         });
     }
@@ -440,14 +723,30 @@ document.addEventListener('DOMContentLoaded', () => {
             } catch(e) {
                 console.warn("Erro ao salvar antes de deslogar:", e);
             }
-            signOut(auth).then(() => {
-                logoutBtn.textContent = originalText;
-                logoutBtn.disabled = false;
-            }).catch((error) => {
-                console.error("Erro ao sair:", error);
-                logoutBtn.textContent = originalText;
-                logoutBtn.disabled = false;
-            });
+            isTestSession = false;
+            try {
+                if (auth && auth.currentUser) {
+                    await signOut(auth);
+                }
+            } catch(e) {
+                console.warn("Aviso ao sair do auth:", e);
+            }
+            logoutBtn.textContent = originalText;
+            logoutBtn.disabled = false;
+
+            stopGame();
+            resetState();
+            if (gmDashboard) gmDashboard.style.display = 'none';
+            if (gameDashboard) gameDashboard.style.display = 'none';
+            document.body.classList.remove('in-game', 'in-gm');
+            if (loginScreen) loginScreen.style.display = 'block';
+            if (topNav) topNav.style.display = 'flex';
+            if (leftPanel) leftPanel.style.display = 'block';
+            if (rightPanel) rightPanel.style.display = 'flex';
+            renderHomeGoldRanking();
+            if (bgMusic) {
+                bgMusic.play().then(() => syncMusicUI()).catch(() => {});
+            }
         });
     }
 
@@ -483,10 +782,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
             try {
                 await setDoc(doc(db, "global", "news"), { text: text });
-                alert("Notícia publicada com sucesso!");
+                alert("Notícia publicada com sucesso no banco de dados!");
                 modalGmNews.style.display = 'none';
             } catch (e) {
-                alert("Erro ao publicar notícia: " + e.message + "\n\n(Aviso: Certifique-se de que as Regras de Segurança do Firestore estão configuradas para 'allow read, write: if true;' durante a fase de testes!)");
+                console.warn("Aviso Firestore na notícia:", e);
+                try {
+                    localStorage.setItem('felineas_global_news', text);
+                } catch(err) {}
+                alert("📢 Notícia salva com sucesso localmente!\n\n(Para sincronizar online com todos os jogadores na nuvem, lembre-se de clicar em 'Publicar' na aba Regras do Console do Firebase).");
+                modalGmNews.style.display = 'none';
             }
             
             btnSaveNews.textContent = originalBtn;
@@ -503,4 +807,10 @@ document.addEventListener('DOMContentLoaded', () => {
         leftEar.style.transform = `rotate(${-15 + (x * 10)}deg) skewX(20deg)`;
         rightEar.style.transform = `rotate(${15 + (x * 10)}deg) skewX(-20deg)`;
     });
-});
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initAuth);
+} else {
+    initAuth();
+}

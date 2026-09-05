@@ -1,14 +1,24 @@
 import {
-    getState, saveState, addXP,
+    getState, saveState, addXP, getGlobalSettings, subscribeToGlobalSettings,
     HERO_TEMPLATES, TROOP_TEMPLATES, ITEM_DATABASE, TOWER_FLOORS,
     selectStarterHero, unlockHeroWithGold, setActiveHero, getActiveHero,
     getHeroTotalStats, addHeroXP, upgradeHeroStat,
     equipItem, unequipItem,
     startExpedition, finishExpedition,
-    getArmyCapacity, trainTroop, dismissTroop, getHeroUnlockCost
+    getArmyCapacity, trainTroop, dismissTroop, getHeroUnlockCost,
+    GOLD_MINT_RECIPES, mintGold,
+    BASE_STORAGE_CAP, CAT_FOOD_CONSUMPTION_RATE, getVillageStorageCapacity
 } from './state.js';
+import {
+    getTalentTreeForHero, unlockHeroTalent, resetHeroTalents, computeHeroTalentBonuses
+} from './talents.js';
+import {
+    renderPixelArtMarchAnimation
+} from './battle.js';
 
 let currentQuartelTab = 'tower';
+let marchAnimationInstance = null;
+
 
 let gameInterval = null;
 
@@ -70,8 +80,29 @@ function showLevelUpNotification(newLevel) {
     }, 4000);
 }
 
+export function updateGlobalBroadcastUI() {
+    const settings = getGlobalSettings();
+    const banner = document.getElementById('global-broadcast-banner');
+    const textEl = document.getElementById('global-broadcast-text');
+    if (!banner || !textEl) return;
+
+    if (settings.broadcast && settings.broadcast.active && settings.broadcast.text) {
+        textEl.textContent = settings.broadcast.text;
+        banner.style.display = 'flex';
+    } else {
+        banner.style.display = 'none';
+    }
+}
+
 export function initGame() {
     const state = getState();
+    updateGlobalBroadcastUI();
+
+    // Registra listener em tempo real para mudanças nas configurações globais do GM
+    subscribeToGlobalSettings(() => {
+        updateGlobalBroadcastUI();
+        updateResourceUI();
+    });
     
     // Setup tabs
     const tabVillage = document.getElementById('tab-village');
@@ -125,7 +156,7 @@ export function initGame() {
             if(tabStats) tabStats.onclick = (e) => { e.preventDefault(); switchTab(tabStats, viewStats, 'tab-stats'); };
             if(tabPrefeitura) tabPrefeitura.onclick = (e) => { e.preventDefault(); switchTab(tabPrefeitura, viewPrefeitura); };
             if(tabQuartel) tabQuartel.onclick = (e) => { e.preventDefault(); switchTab(tabQuartel, viewQuartel, 'tab-quartel'); renderQuartel(); };
-            if(tabMercado) tabMercado.onclick = (e) => { e.preventDefault(); switchTab(tabMercado, viewMercado); };
+            if(tabMercado) tabMercado.onclick = (e) => { e.preventDefault(); switchTab(tabMercado, viewMercado); renderMercado(); };
 
             const btnGotoQuartel = document.getElementById('btn-goto-quartel');
             if (btnGotoQuartel) {
@@ -190,7 +221,7 @@ export function initGame() {
                 if (mobileMoreMenu) mobileMoreMenu.style.display = 'none';
                 if (tabId === 'tab-map') switchTab(tabMap, viewMap, 'tab-map');
                 else if (tabId === 'tab-prefeitura') switchTab(tabPrefeitura, viewPrefeitura);
-                else if (tabId === 'tab-mercado') switchTab(tabMercado, viewMercado);
+                else if (tabId === 'tab-mercado') { switchTab(tabMercado, viewMercado); renderMercado(); }
                 else if (item.id === 'm-btn-profile') {
                     const modal = document.getElementById('modal-profile');
                     if (modal) modal.style.display = 'flex';
@@ -263,49 +294,69 @@ export function initGame() {
                 newBtn.style.backgroundColor = 'var(--parchment-border)';
                 
                 const currentLevel = state.buildings[buildingKey];
-                let timeLeft = 5 + (currentLevel * 10); 
+                const globalSettings = getGlobalSettings();
+                const timeSettings = globalSettings?.timeSettings || {};
+                const isInstant = !!timeSettings.instantConstruction;
+                const timeMult = (typeof timeSettings.constructionMultiplier === 'number' && timeSettings.constructionMultiplier > 0)
+                    ? timeSettings.constructionMultiplier
+                    : 1.0;
+                
+                // Usa o tempo individual configurado pelo GM para cada edifício, ou fallback
+                const baseBuildingTime = (timeSettings.buildingTimes && typeof timeSettings.buildingTimes[buildingKey] === 'number')
+                    ? timeSettings.buildingTimes[buildingKey]
+                    : (5 + (currentLevel * 10));
+                let timeLeft = isInstant ? 0 : Math.max(0, Math.round(baseBuildingTime / timeMult));
 
-                newBtn.innerHTML = `Construindo... <br><small>🕒 ${timeLeft}s</small>`;
-
-                const timerInterval = setInterval(() => {
-                    timeLeft--;
-                    if (timeLeft > 0) {
-                        newBtn.innerHTML = `Construindo... <br><small>🕒 ${timeLeft}s</small>`;
-                    } else {
-                        clearInterval(timerInterval);
-                        
-                        state.buildings[buildingKey]++;
-                        const newLevel = state.buildings[buildingKey];
-                        
-                        if(buildingKey === 'cabana') {
-                            state.pop.max += 5;
-                            state.pop.idle += 5;
-                            state.tempPop.max += 5;
-                            state.tempPop.idle += 5;
-                        }
-
-                        const cardInfo = newBtn.closest('.building-info');
-                        cardInfo.querySelector('.level').textContent = `Nível ${newLevel}`;
-                        
-                        if (costAttr) {
-                            const newFishCost = Math.floor(fishCost * 1.5);
-                            const newWoodCost = Math.floor(woodCost * 1.5);
-                            newBtn.setAttribute('data-cost', `${newFishCost},${newWoodCost}`);
-                            newBtn.innerHTML = `Evoluir <br><small>🐟 ${newFishCost} | 🪵 ${newWoodCost}</small>`;
-                        } else if (goldCostAttr) {
-                            const newGoldCost = Math.floor(goldCost * 1.5);
-                            newBtn.setAttribute('data-cost-gold', `${newGoldCost}`);
-                            newBtn.innerHTML = `Evoluir <br><small>🪙 ${newGoldCost} Ouro</small>`;
-                        }
-                        
-                        newBtn.disabled = false;
-                        newBtn.style.backgroundColor = '';
-                        
-                        checkUnlocks();
-                        gainXP(35, 'Construção Concluída');
-                        saveState(); // Salva após concluir a construção
+                const completeBuildingUpgrade = () => {
+                    state.buildings[buildingKey]++;
+                    const newLevel = state.buildings[buildingKey];
+                    
+                    if(buildingKey === 'cabana') {
+                        state.pop.max += 5;
+                        state.pop.idle += 5;
+                        state.tempPop.max += 5;
+                        state.tempPop.idle += 5;
                     }
-                }, 1000);
+
+                    const cardInfo = newBtn.closest('.building-info');
+                    if (cardInfo) {
+                        const lvlEl = cardInfo.querySelector('.level');
+                        if (lvlEl) lvlEl.textContent = `Nível ${newLevel}`;
+                    }
+                    
+                    if (costAttr) {
+                        const newFishCost = Math.floor(fishCost * 1.5);
+                        const newWoodCost = Math.floor(woodCost * 1.5);
+                        newBtn.setAttribute('data-cost', `${newFishCost},${newWoodCost}`);
+                        newBtn.innerHTML = `Evoluir <br><small>🐟 ${newFishCost} | 🪵 ${newWoodCost}</small>`;
+                    } else if (goldCostAttr) {
+                        const newGoldCost = Math.floor(goldCost * 1.5);
+                        newBtn.setAttribute('data-cost-gold', `${newGoldCost}`);
+                        newBtn.innerHTML = `Evoluir <br><small>🪙 ${newGoldCost} Ouro</small>`;
+                    }
+                    
+                    newBtn.disabled = false;
+                    newBtn.style.backgroundColor = '';
+                    
+                    checkUnlocks();
+                    gainXP(35, 'Construção Concluída');
+                    saveState(); // Salva após concluir a construção
+                };
+
+                if (timeLeft <= 0) {
+                    completeBuildingUpgrade();
+                } else {
+                    newBtn.innerHTML = `Construindo... <br><small>🕒 ${timeLeft}s</small>`;
+                    const timerInterval = setInterval(() => {
+                        timeLeft--;
+                        if (timeLeft > 0) {
+                            newBtn.innerHTML = `Construindo... <br><small>🕒 ${timeLeft}s</small>`;
+                        } else {
+                            clearInterval(timerInterval);
+                            completeBuildingUpgrade();
+                        }
+                    }, 1000);
+                }
             } else {
                 newBtn.style.backgroundColor = '#d9534f'; 
                 newBtn.style.color = 'white';
@@ -323,21 +374,70 @@ export function initGame() {
 
     gameInterval = setInterval(() => {
         if (document.body.classList.contains('in-game')) {
-            // Use committed population for generation, with a minimum 0.1 multiplier if building is level 0
-            const fishRate = state.pop.fish * Math.max(0.1, state.buildings.cais) * 0.5;
-            const woodRate = state.pop.wood * (0.06 + (state.buildings.cabana * 0.04));
-            const woolRate = state.pop.wool * Math.max(0.1, state.buildings.arranhador) * 0.1;
-            const mineRate = state.pop.mine * Math.max(0.1, state.buildings.mina) * 0.2;
+            const globalSettings = getGlobalSettings();
+            const isFarmBonusActive = globalSettings.farmBonusActive !== false;
+            const baseFarmMult = (isFarmBonusActive && typeof globalSettings.farmMultiplier === 'number' && globalSettings.farmMultiplier > 0)
+                ? globalSettings.farmMultiplier
+                : 1.0;
+            const rates = globalSettings.resourceRates || {};
+            const legacyMults = globalSettings.resourceMultipliers || {};
+
+            // Se o bônus de farm estiver desativado pelo GM, fixa estritamente em 1.0x
+            const getMult = (key) => {
+                if (!isFarmBonusActive) return 1.0;
+                let m = 1.0;
+                if (rates[key] && rates[key].active) {
+                    m = Number(rates[key].multiplier) || 1.0;
+                } else if (legacyMults[key] && Number(legacyMults[key]) > 0) {
+                    m = Number(legacyMults[key]);
+                }
+                return m * baseFarmMult;
+            };
+
+            const fishMult = getMult('fish');
+            const woodMult = getMult('wood');
+            const woolMult = getMult('wool');
+            const stoneMult = getMult('stone');
+            const coalMult = getMult('coal');
+            const ironMult = getMult('iron');
+
+            // 1. Gatos trabalhando consomem alimento ativamente
+            const totalWorkingCats = (state.pop.fish || 0) + (state.pop.wood || 0) + (state.pop.wool || 0) + (state.pop.mine || 0) + (state.pop.scouts || 0);
+            const foodConsumption = totalWorkingCats * CAT_FOOD_CONSUMPTION_RATE;
+
+            // 2. Penalidade de fome: se a vila estiver sem peixe, a produtividade cai pela metade
+            const isHungry = (state.resources.fish || 0) <= 0;
+            const hungerPenalty = isHungry ? 0.5 : 1.0;
+
+            // 3. Taxa base desafiadora com progressão estratégica por nível de edifício
+            const grossFishRate = state.pop.fish * (0.020 + ((state.buildings.cais || 0) * 0.006)) * hungerPenalty * fishMult;
+            const netFishRate = grossFishRate - foodConsumption;
+            const woodRate = state.pop.wood * (0.010 + ((state.buildings.cabana || 0) * 0.003)) * hungerPenalty * woodMult;
+            const woolRate = state.pop.wool * (0.008 + ((state.buildings.arranhador || 0) * 0.0025)) * hungerPenalty * woolMult;
+            const baseMineRate = state.pop.mine * (0.007 + ((state.buildings.mina || 0) * 0.002)) * hungerPenalty;
             
-            state.resources.fish += fishRate;
-            state.resources.wood += woodRate;
-            state.resources.wool += woolRate;
-            state.resources.stone += mineRate;
-            state.resources.coal += (mineRate * 0.5);
-            state.resources.iron += (mineRate * 0.2);
+            const stoneRate = baseMineRate * 0.7 * stoneMult;
+            const coalRate = (baseMineRate * 0.25) * coalMult;
+            const ironRate = (baseMineRate * 0.08) * ironMult;
+
+            // 4. Acúmulo livre de recursos (sem limite de capacidade)
+            state.resources.fish = Math.max(0, (state.resources.fish || 0) + netFishRate);
+            state.resources.wood = (state.resources.wood || 0) + woodRate;
+            state.resources.wool = (state.resources.wool || 0) + woolRate;
+            state.resources.stone = (state.resources.stone || 0) + stoneRate;
+            state.resources.coal = (state.resources.coal || 0) + coalRate;
+            state.resources.iron = (state.resources.iron || 0) + ironRate;
             
-            updateResourceUI();
-            updateStatsUI(fishRate, woodRate, woolRate, mineRate);
+            updateResourceUI(Infinity, isHungry);
+            updateStatsUI(netFishRate, woodRate, woolRate, (stoneRate + coalRate + ironRate), {
+                grossFishRate,
+                foodConsumption,
+                isHungry,
+                storageCap: Infinity,
+                totalWorkingCats
+            });
+            updateGlobalBroadcastUI();
+
             
             // Check active expedition timer
             if (state.activeExpedition) {
@@ -454,8 +554,15 @@ export function stopGame() {
     }
 }
 
-export function updateResourceUI() {
+export function updateResourceUI(storageCap, isHungry) {
     const state = getState();
+    if (storageCap === undefined) {
+        storageCap = getVillageStorageCapacity(state);
+    }
+    if (isHungry === undefined) {
+        isHungry = (state.resources.fish || 0) <= 0;
+    }
+
     document.getElementById('res-fish').textContent = Math.floor(state.resources.fish);
     document.getElementById('res-wood').textContent = Math.floor(state.resources.wood);
     document.getElementById('res-wool').textContent = Math.floor(state.resources.wool);
@@ -479,8 +586,47 @@ export function updateResourceUI() {
     document.getElementById('val-max-cats').textContent = state.tempPop.max;
     document.getElementById('pop-fill').style.width = `${(totalUsed / state.tempPop.max) * 100}%`;
 
+    // Recursos sem limite de armazenamento
+    const farmKeys = ['fish', 'wood', 'wool', 'stone', 'coal', 'iron'];
+    farmKeys.forEach(k => {
+        const el = document.getElementById(`res-${k}`);
+        const parent = el ? el.closest('.resource-item') : null;
+        if (parent) {
+            const val = state.resources[k] || 0;
+            parent.title = `${Math.floor(val)} (Estoque da Vila - Sem Limite)`;
+            const capTag = document.getElementById(`cap-tag-${k}`);
+            if (capTag) capTag.style.display = 'none';
+        }
+    });
+
+    // 2. Alerta de Fome na Vila (Produção reduzida em 50%)
+    let hungerBadge = document.getElementById('village-hunger-alert');
+    if (isHungry) {
+        if (!hungerBadge) {
+            const fishItem = document.getElementById('res-fish')?.closest('.resource-item');
+            if (fishItem) {
+                hungerBadge = document.createElement('span');
+                hungerBadge.id = 'village-hunger-alert';
+                hungerBadge.className = 'village-hunger-tag';
+                hungerBadge.textContent = '⚠️ FOME (-50%)';
+                hungerBadge.title = 'Estoque de peixe zerado! Os gatos trabalhadores estão famintos e a produção caiu em 50%.';
+                fishItem.appendChild(hungerBadge);
+            }
+        }
+        if (hungerBadge) hungerBadge.style.display = 'inline-block';
+    } else if (hungerBadge) {
+        hungerBadge.style.display = 'none';
+    }
+
+    // Sigilo do GM: As taxas e alterações do GM não são expostas aos recursos dos jogadores
+    farmKeys.forEach(k => {
+        const badge = document.getElementById(`boost-badge-${k}`);
+        if (badge) badge.style.display = 'none';
+    });
+
     updateXPUI();
 }
+
 
 function checkUnlocks() {
     const state = getState();
@@ -516,6 +662,9 @@ function checkUnlocks() {
 
     // Quartel requires Cabana >= 3
     updateCardState('card-quartel', state.buildings.cabana >= 3, state.buildings.quartel >= 1);
+    
+    // Mercado requires Cabana >= 2
+    updateCardState('card-mercado', state.buildings.cabana >= 2, state.buildings.mercado >= 1);
     
     // Prefeitura is always unlocked, but grey if level 0
     updateCardState('card-prefeitura', true, state.buildings.prefeitura >= 1);
@@ -665,12 +814,158 @@ function checkMissions() {
     if (state.missions?.equipItem1 && !state.missions.equipItem1.done && hasAnyEquipped && !state.missions.equipItem1.ready) {
         state.missions.equipItem1.ready = true; changed = true;
     }
-    if(changed) renderMissions();
-    renderLevelMissions();
+    if (changed || !document.getElementById('mission-container')?.hasChildNodes()) {
+        renderMissions();
+    }
+    if (!document.getElementById('level-mission-container')?.hasChildNodes()) {
+        renderLevelMissions();
+    }
 }
 
-export function updateStatsUI(fish, wood, wool, mine) {
+export function updateStatsUI(fish, wood, wool, mine, extraDetails = {}) {
     const state = getState();
+    const globalSettings = getGlobalSettings();
+    const isFarmBonusActive = globalSettings.farmBonusActive !== false;
+    const baseFarmMult = (isFarmBonusActive && typeof globalSettings.farmMultiplier === 'number' && globalSettings.farmMultiplier > 0)
+        ? globalSettings.farmMultiplier
+        : 1.0;
+    const xpMult = (typeof globalSettings.xpMultiplier === 'number' && globalSettings.xpMultiplier > 0) ? globalSettings.xpMultiplier : 1.0;
+    const timeCfg = globalSettings.timeSettings || {};
+    const rates = globalSettings.resourceRates || {};
+    const legacyMults = globalSettings.resourceMultipliers || {};
+
+    const getSectorMult = (key) => {
+        if (!isFarmBonusActive) return 1.0;
+        let m = 1.0;
+        if (rates[key] && rates[key].active) {
+            m = Number(rates[key].multiplier) || 1.0;
+        } else if (legacyMults[key] && Number(legacyMults[key]) > 0) {
+            m = Number(legacyMults[key]);
+        }
+        return m * baseFarmMult;
+    };
+
+    const multFish = getSectorMult('fish');
+    const multWood = getSectorMult('wood');
+    const multWool = getSectorMult('wool');
+    const multStone = getSectorMult('stone');
+    const multCoal = getSectorMult('coal');
+    const multIron = getSectorMult('iron');
+
+    const caisLevel = state.buildings.cais || 0;
+    const cabanaLevel = state.buildings.cabana || 0;
+    const arranhadorLevel = state.buildings.arranhador || 0;
+    const minaLevel = state.buildings.mina || 0;
+
+    const totalWorkingCats = (state.pop.fish || 0) + (state.pop.wood || 0) + (state.pop.wool || 0) + (state.pop.mine || 0) + (state.pop.scouts || 0);
+    const foodConsumption = extraDetails.foodConsumption !== undefined 
+        ? extraDetails.foodConsumption 
+        : totalWorkingCats * CAT_FOOD_CONSUMPTION_RATE;
+    const isHungry = extraDetails.isHungry !== undefined 
+        ? extraDetails.isHungry 
+        : (state.resources.fish || 0) <= 0;
+    const hungerPenalty = isHungry ? 0.5 : 1.0;
+
+    // Se as taxas não foram fornecidas diretamente, calcula-as com base no novo modelo desafiador
+    if (fish === undefined) {
+        const grossFish = state.pop.fish * (0.020 + (caisLevel * 0.006)) * hungerPenalty * multFish;
+        fish = grossFish - foodConsumption;
+        wood = state.pop.wood * (0.010 + (cabanaLevel * 0.003)) * hungerPenalty * multWood;
+        wool = state.pop.wool * (0.008 + (arranhadorLevel * 0.0025)) * hungerPenalty * multWool;
+        const baseM = state.pop.mine * (0.007 + (minaLevel * 0.002)) * hungerPenalty;
+        mine = (baseM * 0.7 * multStone) + (baseM * 0.25 * multCoal) + (baseM * 0.08 * multIron);
+    }
+
+    // 1. Banner de Bônus & Eventos Oficiais do Reino (Alterações do GM são sigilosas a menos que haja evento público)
+    const elGmFarm = document.getElementById('stat-gm-farm-rate');
+    const elGmBuild = document.getElementById('stat-gm-build-rate');
+    const elGmXp = document.getElementById('stat-gm-xp-rate');
+    const elGmFatigue = document.getElementById('stat-gm-fatigue-rate');
+    const elGmChips = document.getElementById('stat-gm-rates-chips');
+    const elGmBanner = document.getElementById('stats-gm-boosts-banner');
+
+    if (elGmBanner) {
+        if (state.activeEvent) {
+            elGmBanner.style.display = 'block';
+            const eventTitle = elGmBanner.querySelector('h3');
+            if (eventTitle) eventTitle.innerHTML = `🎉 Evento Real em Andamento: ${state.activeEvent.name || 'Celebração da Vila'}`;
+        } else {
+            // GM alterações permanecem estritamente sigilosas
+            elGmBanner.style.display = 'none';
+        }
+    }
+
+    if (elGmFarm) {
+        if (!isFarmBonusActive) {
+            elGmFarm.textContent = '100% Padrão';
+            elGmFarm.style.color = 'var(--text-secondary)';
+        } else {
+            const bonusPct = Math.round((baseFarmMult - 1) * 100);
+            elGmFarm.textContent = `${bonusPct >= 0 ? '+' : ''}${bonusPct}% Produção`;
+            elGmFarm.style.color = 'var(--gold-hover)';
+        }
+    }
+
+    if (elGmBuild) {
+        if (timeCfg.instantConstruction) {
+            elGmBuild.textContent = 'Obras Imediatas';
+            elGmBuild.style.color = '#27ae60';
+        } else {
+            const bMult = (typeof timeCfg.constructionMultiplier === 'number' && timeCfg.constructionMultiplier > 0) ? timeCfg.constructionMultiplier : 1.0;
+            elGmBuild.textContent = `${Math.round(bMult * 100)}% Eficiência`;
+            elGmBuild.style.color = '#2980b9';
+        }
+    }
+
+    if (elGmXp) {
+        elGmXp.textContent = `${Math.round(xpMult * 100)}% XP`;
+    }
+
+    if (elGmFatigue) {
+        if (timeCfg.noFatigue) {
+            elGmFatigue.textContent = 'Vigor Contínuo';
+            elGmFatigue.style.color = '#27ae60';
+        } else {
+            elGmFatigue.textContent = 'Normal';
+            elGmFatigue.style.color = 'var(--text-primary)';
+        }
+    }
+
+    if (elGmChips) {
+        if (state.activeEvent) {
+            elGmChips.innerHTML = `<span class="gm-stat-badge" style="background: rgba(39, 174, 96, 0.15); border-color: #27ae60; color: #27ae60; font-weight: bold;">🎉 Bônus de Celebração Ativo em Todo o Reino</span>`;
+        } else {
+            elGmChips.innerHTML = '';
+        }
+    }
+
+    // 2. Colunas de Eficiência na Tabela de Setores
+    const elMultFish = document.getElementById('stat-mult-fish');
+    const elMultWood = document.getElementById('stat-mult-wood');
+    const elMultWool = document.getElementById('stat-mult-wool');
+    const elMultMine = document.getElementById('stat-mult-mine');
+
+    if (elMultFish) elMultFish.textContent = `${Math.round(multFish * 100)}%`;
+    if (elMultWood) elMultWood.textContent = `${Math.round(multWood * 100)}%`;
+    if (elMultWool) elMultWool.textContent = `${Math.round(multWool * 100)}%`;
+    if (elMultMine) elMultMine.textContent = `${Math.round(multStone * 100)}%`;
+
+    // 3. Taxa teórica de produção por gato alocado
+    const perCatFish = (0.020 + (caisLevel * 0.006)) * hungerPenalty * multFish;
+    const perCatWood = (0.010 + (cabanaLevel * 0.003)) * hungerPenalty * multWood;
+    const perCatWool = (0.008 + (arranhadorLevel * 0.0025)) * hungerPenalty * multWool;
+    const baseCatMina = (0.007 + (minaLevel * 0.002)) * hungerPenalty;
+    const perCatMine = (baseCatMina * 0.7 * multStone) + (baseCatMina * 0.25 * multCoal) + (baseCatMina * 0.08 * multIron);
+
+    const elPerCatFish = document.getElementById('stat-percat-fish');
+    const elPerCatWood = document.getElementById('stat-percat-wood');
+    const elPerCatWool = document.getElementById('stat-percat-wool');
+    const elPerCatMine = document.getElementById('stat-percat-mine');
+
+    if (elPerCatFish) elPerCatFish.textContent = `(+${perCatFish.toFixed(3)}/s | +${Math.round(perCatFish * 3600)}/h)`;
+    if (elPerCatWood) elPerCatWood.textContent = `(+${perCatWood.toFixed(3)}/s | +${Math.round(perCatWood * 3600)}/h)`;
+    if (elPerCatWool) elPerCatWool.textContent = `(+${perCatWool.toFixed(3)}/s | +${Math.round(perCatWool * 3600)}/h)`;
+    if (elPerCatMine) elPerCatMine.textContent = `(+${perCatMine.toFixed(3)}/s | +${Math.round(perCatMine * 3600)}/h)`;
 
     // Summary counts
     const totalWorking = state.pop.fish + state.pop.wood + state.pop.wool + state.pop.mine;
@@ -688,10 +983,11 @@ export function updateStatsUI(fish, wood, wool, mine) {
     const elWool = document.getElementById('stat-wool');
     const elMine = document.getElementById('stat-mine');
     
-    if (elFish) elFish.textContent = `+${fish.toFixed(1)}`;
-    if (elWood) elWood.textContent = `+${wood.toFixed(1)}`;
-    if (elWool) elWool.textContent = `+${wool.toFixed(1)}`;
-    if (elMine) elMine.textContent = `+${mine.toFixed(1)}`;
+    const signFish = fish >= 0 ? '+' : '';
+    if (elFish) elFish.innerHTML = `${signFish}${fish.toFixed(2)} /s <small id="stat-percat-fish" style="opacity: 0.75; font-weight: normal; font-size: 0.75rem; display: block;">(+${perCatFish.toFixed(3)}/gato | -${foodConsumption.toFixed(3)} consumo)</small>`;
+    if (elWood) elWood.innerHTML = `+${wood.toFixed(2)} /s <small id="stat-percat-wood" style="opacity: 0.75; font-weight: normal; font-size: 0.75rem; display: block;">(+${perCatWood.toFixed(3)}/gato)</small>`;
+    if (elWool) elWool.innerHTML = `+${wool.toFixed(2)} /s <small id="stat-percat-wool" style="opacity: 0.75; font-weight: normal; font-size: 0.75rem; display: block;">(+${perCatWool.toFixed(3)}/gato)</small>`;
+    if (elMine) elMine.innerHTML = `+${mine.toFixed(2)} /s <small id="stat-percat-mine" style="opacity: 0.75; font-weight: normal; font-size: 0.75rem; display: block;">(+${perCatMine.toFixed(3)}/gato)</small>`;
 
     // Rates per hour
     const elFishH = document.getElementById('stat-fish-hour');
@@ -699,7 +995,9 @@ export function updateStatsUI(fish, wood, wool, mine) {
     const elWoolH = document.getElementById('stat-wool-hour');
     const elMineH = document.getElementById('stat-mine-hour');
 
-    if (elFishH) elFishH.textContent = `+${Math.floor(fish * 3600)} /h`;
+    const fishHourly = Math.floor(fish * 3600);
+    const signFishH = fishHourly >= 0 ? '+' : '';
+    if (elFishH) elFishH.textContent = `${signFishH}${fishHourly} /h`;
     if (elWoodH) elWoodH.textContent = `+${Math.floor(wood * 3600)} /h`;
     if (elWoolH) elWoolH.textContent = `+${Math.floor(wool * 3600)} /h`;
     if (elMineH) elMineH.textContent = `+${Math.floor(mine * 3600)} /h`;
@@ -800,25 +1098,126 @@ export function updateStatsUI(fish, wood, wool, mine) {
     if (elInventoryCount) elInventoryCount.textContent = `${state.inventory?.length || 0} na Mochila`;
 }
 
+export function showTabletopCombatModal(res) {
+    let modal = document.getElementById('modal-tabletop-combat');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'modal-tabletop-combat';
+        modal.className = 'modal';
+        document.body.appendChild(modal);
+    }
+
+    const enemy = res.battleDetails?.enemy || res.floor;
+    const isVictory = res.isVictory;
+    const combatLog = res.combatLog || [];
+
+    modal.innerHTML = `
+        <div class="modal-content tabletop-modal-content parchment-panel slide-in-down" style="max-width: 720px; width: 95%; max-height: 88vh; display: flex; flex-direction: column; overflow: hidden; padding: 0; border: 2px solid var(--gold); box-shadow: 0 16px 40px rgba(0,0,0,0.5);">
+            <!-- Header -->
+            <div style="background: ${isVictory ? 'linear-gradient(135deg, #1b4332, #2d6a4f)' : 'linear-gradient(135deg, #4a0e17, #780000)'}; color: #fff; padding: 18px 24px; border-bottom: 2px solid var(--gold); display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 14px;">
+                    <span style="font-size: 2.4rem;">${isVictory ? '🏆' : '💀'}</span>
+                    <div>
+                        <h3 style="font-family: var(--font-heading); margin: 0; font-size: 1.4rem; color: #ffd700;">
+                            ${isVictory ? 'Vitória Épica na Torre dos Desafios!' : 'Retirada Tática na Torre!'}
+                        </h3>
+                        <span style="font-size: 0.88rem; opacity: 0.95;">
+                            Andar ${res.floor.floor} &bull; ${enemy.name} ${enemy.title ? `(${enemy.title})` : ''}
+                        </span>
+                    </div>
+                </div>
+                <button type="button" class="btn-close-modal" id="btn-close-combat-top" style="background:none; border:none; color:#fff; font-size:1.8rem; cursor:pointer; line-height: 1;">&times;</button>
+            </div>
+
+            <!-- Summary Bar -->
+            <div style="padding: 12px 20px; background: rgba(0,0,0,0.04); border-bottom: 1px solid var(--parchment-border); display: flex; justify-content: space-around; flex-wrap: wrap; gap: 10px; font-size: 0.9rem;">
+                <span>🪙 Ouro: <strong style="color:var(--gold-hover);">+${res.goldGain}</strong></span>
+                <span>🌟 XP Herói: <strong style="color:#8e44ad;">+${res.xpGain}</strong></span>
+                <span>⚔️ Rodadas: <strong>${res.battleDetails?.totalRounds || 1}</strong></span>
+                ${res.droppedItem ? `<span style="color:#27ae60; font-weight:bold;">💎 Item: ${res.droppedItem.icon} ${res.droppedItem.name}</span>` : ''}
+            </div>
+
+            <!-- Tabletop RPG Dice Combat Log Header -->
+            <div style="padding: 14px 20px 6px 20px; font-weight: 800; font-size: 0.92rem; color: var(--wood-dark); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--parchment-border);">
+                <span>🎲 Registro de Mesa (Rolagem de Dados D&D 5e):</span>
+                <span style="font-size: 0.78rem; color: var(--text-secondary); font-weight: normal;">d20 de Ataque vs Classe de Armadura (CA)</span>
+            </div>
+
+            <!-- Scrollable Dice Log -->
+            <div class="combat-dice-log-scroll" style="flex: 1; overflow-y: auto; padding: 14px 20px; display: flex; flex-direction: column; gap: 8px; background: rgba(0,0,0,0.02);">
+                ${combatLog.length === 0 ? '<p style="text-align:center; color:var(--text-secondary);">Sem registros de combate.</p>' : combatLog.map(entry => {
+                    if (entry.type === 'round_header') {
+                        return `<div class="combat-log-round-header" style="font-weight: 800; font-size: 0.88rem; color: var(--gold-hover); text-align: center; margin: 8px 0 4px 0; border-bottom: 1px dashed var(--parchment-border); padding-bottom: 4px;">${entry.text}</div>`;
+                    }
+                    const isCrit = entry.isNat20;
+                    const isFumble = entry.isNat1;
+                    const isVictoryEntry = entry.type === 'victory';
+                    const isDefeatEntry = entry.type === 'defeat';
+
+                    let bg = 'rgba(255,255,255,0.7)';
+                    let border = '1px solid rgba(0,0,0,0.08)';
+
+                    if (isCrit) {
+                        bg = 'rgba(212,175,55,0.18)';
+                        border = '1px solid var(--gold)';
+                    } else if (isFumble) {
+                        bg = 'rgba(192,57,43,0.12)';
+                        border = '1px solid #c0392b';
+                    } else if (isVictoryEntry) {
+                        bg = 'rgba(39,174,96,0.15)';
+                        border = '1px solid #27ae60';
+                    } else if (isDefeatEntry) {
+                        bg = 'rgba(192,57,43,0.15)';
+                        border = '1px solid #c0392b';
+                    } else if (entry.phase === 'enemy_attack') {
+                        bg = 'rgba(0,0,0,0.04)';
+                    } else if (entry.phase === 'squad_volley') {
+                        bg = 'rgba(41,128,185,0.08)';
+                        border = '1px solid rgba(41,128,185,0.2)';
+                    }
+
+                    return `
+                        <div class="combat-log-row ${isCrit ? 'crit-roll' : ''} ${isFumble ? 'fumble-roll' : ''}" style="background: ${bg}; border: ${border}; border-radius: 8px; padding: 9px 14px; font-size: 0.86rem; line-height: 1.45; color: var(--text-primary);">
+                            ${entry.text}
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+
+            <!-- Footer Action -->
+            <div style="padding: 14px 20px; border-top: 1px solid var(--parchment-border); text-align: center; background: rgba(0,0,0,0.03);">
+                <button type="button" class="btn primary-btn" id="btn-close-combat-modal" style="padding: 10px 36px; font-size: 1rem; font-weight: bold;">
+                    ⚔️ Concluir Relatório de Combate
+                </button>
+            </div>
+        </div>
+    `;
+
+    modal.style.display = 'flex';
+
+    const closeModal = () => {
+        modal.style.display = 'none';
+    };
+
+    const btnClose = modal.querySelector('#btn-close-combat-modal');
+    const btnTopClose = modal.querySelector('#btn-close-combat-top');
+    if (btnClose) btnClose.onclick = closeModal;
+    if (btnTopClose) btnTopClose.onclick = closeModal;
+}
+
 function handleExpeditionResult(res) {
     const state = getState();
     updateResourceUI();
     checkMissions();
 
-    let msg = '';
     if (res.isVictory) {
-        msg = `🎉 [VITÓRIA NA TORRE] Seu exército conquistou ${res.floor.name}!\n\nEspólios: 🪙 +${res.goldGain} Ouro | 🌟 +${res.xpGain} XP para ${res.hero.name}!`;
-        if (res.droppedItem) {
-            msg += `\n\n💎 ITEM OBTIDO: ${res.droppedItem.icon} ${res.droppedItem.name} [${res.droppedItem.rarity.toUpperCase()}] guardado na sua Mochila!`;
-        }
         showLevelUpNotification(`Vitória no Andar ${res.floor.floor}! (+${res.goldGain} Ouro) 🏆`);
-    } else {
-        msg = `⚠️ [RETIRADA TÁTICA] Seu exército foi repelido em ${res.floor.name}!\n\n${res.tacticalReason || 'As defesas inimigas superaram o poder do seu esquadrão.'}\n\n(+${res.xpGain} XP de aprendizado de combate)`;
     }
 
-    alert(msg);
+    showTabletopCombatModal(res);
     renderQuartel();
 }
+
 
 function updateTowerLiveUI() {
     const state = getState();
@@ -953,6 +1352,9 @@ export function renderQuartel() {
             <button type="button" class="quartel-tab-btn ${currentQuartelTab === 'tower' ? 'active' : ''}" data-tab="tower">
                 🏰 Torre de Desafios
             </button>
+            <button type="button" class="quartel-tab-btn ${currentQuartelTab === 'talents' ? 'active' : ''}" data-tab="talents">
+                🌳 Talentos & Ataques D&D ${(activeHero?.talentPoints || 0) > 0 ? `<span style="background:#27ae60; color:#fff; border-radius:10px; padding:1px 6px; font-size:0.75rem;">+${activeHero.talentPoints}</span>` : ''}
+            </button>
             <button type="button" class="quartel-tab-btn ${currentQuartelTab === 'heroes' ? 'active' : ''}" data-tab="heroes">
                 🐾 Campeões & Atributos ${(activeHero?.statPoints || 0) > 0 ? `<span style="background:#ff9800; color:#fff; border-radius:10px; padding:1px 6px; font-size:0.75rem;">+${activeHero.statPoints}</span>` : ''}
             </button>
@@ -989,7 +1391,7 @@ export function renderQuartel() {
                 </div>
             </div>
 
-            <!-- Active Expedition Banner (if underway) -->
+            <!-- Active Expedition Banner (with Pixel Art March Animation) -->
             ${state.activeExpedition ? `
                 <div id="tower-live-expedition-card" class="village-expedition-banner" style="margin-bottom: 20px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
@@ -1000,11 +1402,18 @@ export function renderQuartel() {
                             ⏳ ${Math.max(0, Math.ceil((state.activeExpedition.endTime - now) / 1000))}s restantes
                         </span>
                     </div>
+                    
+                    <!-- Pixel Art March Animation Container -->
+                    <div class="pixel-art-march-box" style="margin: 8px 0 12px 0; border-radius: 8px; overflow: hidden; border: 1px solid var(--parchment-border); background: #120d18; text-align: center; box-shadow: inset 0 0 10px rgba(0,0,0,0.5);">
+                        <canvas id="tower-pixel-art-canvas" class="pixel-art-march-canvas" style="display: block; width: 100%; max-height: 100px; image-rendering: pixelated;"></canvas>
+                    </div>
+
                     <div class="expedition-mini-progress" style="height: 12px;">
                         <div id="tower-live-fill" class="expedition-mini-fill" style="width: ${Math.min(100, Math.round(((now - state.activeExpedition.startTime) / state.activeExpedition.durationMs) * 100))}%;"></div>
                     </div>
                 </div>
             ` : ''}
+
 
             <!-- Fatigue Notice (if resting) -->
             ${(isHeroResting || isArmyResting) ? `
@@ -1067,9 +1476,132 @@ export function renderQuartel() {
     }
 
     // ==========================================
+    // TAB: ÁRVORE DE TALENTOS & ATAQUES D&D 5E
+    // ==========================================
+    else if (currentQuartelTab === 'talents') {
+        const tree = getTalentTreeForHero(activeHero.id);
+        const talentPoints = activeHero.talentPoints || 0;
+        const heroTalents = activeHero.talents || {};
+        const bonuses = computeHeroTalentBonuses(activeHero);
+
+        mainContentHTML = `
+            <!-- Talent Tree Header Banner -->
+            <div class="parchment-panel" style="background: linear-gradient(135deg, rgba(39,174,96,0.12), rgba(212,175,55,0.12)); border: 1px solid var(--gold); border-radius: 12px; padding: 18px 22px; margin-bottom: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
+                    <div style="display: flex; align-items: center; gap: 14px;">
+                        <img src="${activeHero.image}" alt="${activeHero.name}" style="width: 64px; height: 64px; border-radius: 50%; border: 2px solid var(--gold); object-fit: cover;">
+                        <div>
+                            <h3 style="font-family: var(--font-heading); color: var(--wood-dark); margin: 0; font-size: 1.25rem;">
+                                🌳 Árvore de Talentos D&D: ${activeHero.name}
+                            </h3>
+                            <span class="hero-class-badge">${activeHero.class} (Nv. ${activeHero.level})</span>
+                            <p style="margin: 4px 0 0 0; font-size: 0.85rem; color: var(--text-secondary);">
+                                Desbloqueie ataques de dados, magias lendárias e bônus de Classe de Armadura (CA).
+                            </p>
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                        <div style="background: rgba(39, 174, 96, 0.15); border: 1px solid #27ae60; padding: 8px 16px; border-radius: 8px; text-align: center;">
+                            <span style="font-size: 0.75rem; color: #27ae60; font-weight: bold; display: block;">PONTOS DE TALENTO D&D</span>
+                            <strong style="font-size: 1.35rem; color: #27ae60;">✨ ${talentPoints} Livres</strong>
+                        </div>
+                        <button type="button" class="btn secondary-btn btn-reset-talents" style="padding: 8px 14px; font-size: 0.85rem;" title="Devolve todos os pontos investidos">
+                            🔄 Redefinir Talentos
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Active Hero Active Attacks Showcase -->
+            ${bonuses.activeAttacks.length > 0 ? `
+                <div style="margin-bottom: 20px; background: rgba(0,0,0,0.03); border: 1px solid var(--parchment-border); border-radius: 10px; padding: 12px 16px;">
+                    <span style="font-size: 0.78rem; font-weight: 800; color: var(--wood-dark); text-transform: uppercase;">⚔️ Ataques & Magias Especiais Ativas no Combate:</span>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 6px;">
+                        ${bonuses.activeAttacks.map(atk => `
+                            <span style="background: rgba(212,175,55,0.18); border: 1px solid var(--gold); color: var(--wood-dark); padding: 5px 12px; border-radius: 8px; font-weight: bold; font-size: 0.88rem; display: inline-flex; align-items: center; gap: 6px;">
+                                ${atk.icon} ${atk.name} (${atk.damageDice} + ${atk.statKey.toUpperCase()})
+                            </span>
+                        `).join('')}
+                    </div>
+                </div>
+            ` : ''}
+
+            <!-- Branches Grid -->
+            <div class="talent-branches-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px;">
+                ${tree ? tree.branches.map(branch => `
+                    <div class="talent-branch-card parchment-panel" style="padding: 20px; border-radius: 14px; border: 1px solid var(--parchment-border); background: rgba(255,255,255,0.7);">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px; border-bottom: 2px solid var(--parchment-border); padding-bottom: 8px;">
+                            <span style="font-size: 1.8rem;">${branch.icon}</span>
+                            <div>
+                                <h4 style="font-family: var(--font-heading); color: var(--wood-dark); margin: 0; font-size: 1.15rem;">${branch.name}</h4>
+                                <small style="color: var(--text-secondary); font-size: 0.8rem;">${branch.desc}</small>
+                            </div>
+                        </div>
+
+                        <div class="talent-nodes-list" style="display: flex; flex-direction: column; gap: 14px; margin-top: 14px;">
+                            ${branch.talents.map((t) => {
+                                const isUnlocked = !!heroTalents[t.id];
+                                const hasPrereq = !t.requires || !!heroTalents[t.requires];
+                                const canAfford = talentPoints >= (t.cost || 1);
+                                const isReady = !isUnlocked && hasPrereq && canAfford;
+
+                                return `
+                                    <div class="talent-node-card ${isUnlocked ? 'unlocked' : (hasPrereq ? 'available' : 'locked')}" style="padding: 12px 14px; border-radius: 10px; border: 1px solid ${isUnlocked ? '#27ae60' : (hasPrereq ? 'var(--gold)' : 'rgba(0,0,0,0.1)')}; background: ${isUnlocked ? 'rgba(39, 174, 96, 0.08)' : (hasPrereq ? 'rgba(212,175,55,0.06)' : 'rgba(0,0,0,0.03)')};">
+                                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px;">
+                                            <div style="display: flex; align-items: center; gap: 8px;">
+                                                <span style="font-size: 1.3rem;">${t.icon}</span>
+                                                <div>
+                                                    <h5 style="margin: 0; font-family: var(--font-heading); font-size: 0.95rem; color: var(--wood-dark);">
+                                                        ${t.name}
+                                                    </h5>
+                                                    <span style="font-size: 0.72rem; text-transform: uppercase; font-weight: bold; color: ${t.type === 'active_attack' ? '#e67e22' : '#2980b9'};">
+                                                        ${t.type === 'active_attack' ? '⚔️ Ataque Especial Ativo' : '🛡️ Habilidade Passiva'} &bull; Tier ${t.tier}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <span style="font-size: 0.75rem; font-weight: bold; padding: 2px 8px; border-radius: 6px; background: ${isUnlocked ? '#27ae60' : 'rgba(0,0,0,0.08)'}; color: ${isUnlocked ? '#fff' : 'var(--text-secondary)'};">
+                                                ${isUnlocked ? '✔ Desbloqueado' : `Custo: ${t.cost || 1} TP`}
+                                            </span>
+                                        </div>
+
+                                        <p style="font-size: 0.82rem; color: var(--text-secondary); margin: 6px 0 10px 0; line-height: 1.35;">
+                                            ${t.desc}
+                                        </p>
+
+                                        <div style="text-align: right;">
+                                            ${isUnlocked ? `
+                                                <button type="button" class="btn" disabled style="background: rgba(39,174,96,0.2); color: #27ae60; border: 1px solid #27ae60; font-size: 0.8rem; padding: 4px 10px;">
+                                                    ✔ Ativo em Combate
+                                                </button>
+                                            ` : isReady ? `
+                                                <button type="button" class="btn primary-btn btn-unlock-talent" data-talent="${t.id}" style="font-size: 0.82rem; padding: 5px 12px;">
+                                                    ✨ Aprender (${t.cost || 1} Ponto)
+                                                </button>
+                                            ` : !hasPrereq ? `
+                                                <button type="button" class="btn secondary-btn" disabled style="font-size: 0.78rem; opacity: 0.5; padding: 4px 8px;">
+                                                    🔒 Requer Talento Anterior
+                                                </button>
+                                            ` : `
+                                                <button type="button" class="btn secondary-btn" disabled style="font-size: 0.78rem; opacity: 0.5; padding: 4px 8px;">
+                                                    ✨ Sem Pontos (Suba Nível na Torre)
+                                                </button>
+                                            `}
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                `).join('') : '<p>Nenhuma árvore de talentos disponível.</p>'}
+            </div>
+        `;
+    }
+
+    // ==========================================
     // TAB 2: CAMPEÕES & ATRIBUTOS (ELDEN RING)
     // ==========================================
     else if (currentQuartelTab === 'heroes') {
+
         const heroesList = ['sword', 'bow', 'mage'];
 
         mainContentHTML = `
@@ -1573,6 +2105,172 @@ export function renderQuartel() {
                 alert(res.reason);
             }
         };
+    });
+
+    // --- Tab: D&D Talents Bindings ---
+    container.querySelectorAll('.btn-unlock-talent').forEach(btn => {
+        btn.onclick = () => {
+            const talentId = btn.getAttribute('data-talent');
+            const res = unlockHeroTalent(activeHero, talentId);
+            if (res.success) {
+                saveState();
+                renderQuartel();
+                const toast = document.createElement('div');
+                toast.className = 'gm-toast';
+                toast.style.cssText = 'position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: #27ae60; color: #fff; padding: 12px 24px; border-radius: 25px; font-weight: bold; z-index: 10000; box-shadow: 0 6px 20px rgba(0,0,0,0.25);';
+                toast.textContent = `✨ Talento D&D Aprendido: ${res.talent.name}!`;
+                document.body.appendChild(toast);
+                setTimeout(() => toast.remove(), 2500);
+            } else {
+                alert(res.reason);
+            }
+        };
+    });
+
+    const btnResetTalents = container.querySelector('.btn-reset-talents');
+    if (btnResetTalents) {
+        btnResetTalents.onclick = () => {
+            if (confirm(`Deseja redefinir todos os talentos de ${activeHero.name}? Os pontos investidos serão devolvidos.`)) {
+                const refunded = resetHeroTalents(activeHero);
+                saveState();
+                renderQuartel();
+                alert(`Talentos redefinidos com sucesso! ${refunded} ponto(s) devolvidos.`);
+            }
+        };
+    }
+
+    // --- Tab 1: Pixel Art March Animation Mount ---
+    if (currentQuartelTab === 'tower' && state.activeExpedition) {
+        setTimeout(() => {
+            const canvas = document.getElementById('tower-pixel-art-canvas');
+            if (canvas) {
+                if (marchAnimationInstance) marchAnimationInstance.stop();
+                marchAnimationInstance = renderPixelArtMarchAnimation(canvas);
+            }
+        }, 30);
+    } else if (marchAnimationInstance) {
+        marchAnimationInstance.stop();
+        marchAnimationInstance = null;
+    }
+}
+
+
+// --- Mercado: Casa da Moeda & Fundição Real de Ouro ---
+export function renderMercado() {
+    const container = document.getElementById('mercado-content-container');
+    if (!container) return;
+    const state = getState();
+    const mercadoLevel = state.buildings.mercado || 0;
+
+    if (mercadoLevel < 1) {
+        container.innerHTML = `
+            <div style="text-align: center; padding: 40px 20px; background: rgba(0,0,0,0.03); border: 2px dashed var(--parchment-border); border-radius: 12px; margin-top: 15px;">
+                <span style="font-size: 3rem; display: block; margin-bottom: 12px;">🏪🔒</span>
+                <h3 style="font-family: var(--font-heading); color: var(--wood-dark); margin-bottom: 8px;">Mercado Felino Ainda Não Construído</h3>
+                <p style="color: var(--text-secondary); max-width: 500px; margin: 0 auto 16px auto; font-size: 0.95rem; line-height: 1.5;">
+                    Construa o <strong>Mercado (requer 🪵 400 Madeira e 🪨 100 Pedra)</strong> na Visão da Vila para liberar a <strong>Casa da Moeda Felina</strong> e as <strong>Rotas Comerciais de Ouro</strong>!
+                </p>
+                <div style="display: inline-block; background: rgba(212,175,55,0.15); border: 1px solid var(--gold); border-radius: 8px; padding: 8px 16px; font-size: 0.85rem; color: var(--wood-dark); font-weight: bold;">
+                    🪙 Ouro é um tesouro nobre e raro: requer infraestrutura comercial para ser forjado!
+                </div>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = `
+        <div style="background: linear-gradient(135deg, rgba(212,175,55,0.14), rgba(39,174,96,0.08)); border: 1px solid var(--gold); border-radius: 12px; padding: 16px 20px; margin-bottom: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+                <div>
+                    <h3 style="font-family: var(--font-heading); color: var(--wood-dark); margin: 0 0 4px 0; display: flex; align-items: center; gap: 8px;">
+                        🪙 Casa da Moeda Felina & Rotas Comerciais <span style="font-size: 0.8rem; background: var(--gold); color: #fff; padding: 2px 8px; border-radius: 10px;">Nível ${mercadoLevel}</span>
+                    </h3>
+                    <p style="margin: 0; font-size: 0.88rem; color: var(--text-secondary);">
+                        Cunhe moedas fundindo ferro raro e carvão, ou envie caravanas com excedentes de madeira e lã para mercadores vizinhos.
+                    </p>
+                </div>
+                <div style="text-align: right; background: rgba(255,255,255,0.6); padding: 8px 14px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.06);">
+                    <span style="font-size: 0.75rem; color: var(--text-secondary); display: block; font-weight: bold;">TESOURO DA VILA</span>
+                    <strong style="font-size: 1.25rem; color: var(--gold-hover);">🪙 ${Math.floor(state.resources.gold || 0)} Ouro</strong>
+                </div>
+            </div>
+        </div>
+
+        <div class="mercado-recipes-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
+            ${GOLD_MINT_RECIPES.map(rec => {
+                const canLevel = mercadoLevel >= rec.minMercadoLevel;
+                const canAfford = Object.keys(rec.cost).every(k => (state.resources[k] || 0) >= rec.cost[k]);
+                
+                const costBadges = Object.entries(rec.cost).map(([res, amt]) => {
+                    const have = Math.floor(state.resources[res] || 0);
+                    const ok = have >= amt;
+                    const resIcons = { fish: '🐟 Peixe', wood: '🪵 Madeira', wool: '🧶 Lã', stone: '🪨 Pedra', coal: '⬛ Carvão', iron: '⛏️ Ferro' };
+                    return `<span style="display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 6px; font-size: 0.82rem; font-weight: bold; background: ${ok ? 'rgba(39, 174, 96, 0.12)' : 'rgba(231, 76, 60, 0.12)'}; color: ${ok ? '#27ae60' : '#c0392b'}; border: 1px solid ${ok ? 'rgba(39,174,96,0.3)' : 'rgba(231,76,60,0.3)'};">
+                        ${resIcons[res] || res}: ${amt} (${have})
+                    </span>`;
+                }).join(' ');
+
+                return `
+                    <div class="parchment-panel mercado-card" style="padding: 18px; border-radius: 12px; border: 1px solid var(--parchment-border); display: flex; flex-direction: column; justify-content: space-between; background: rgba(255,255,255,0.7); box-shadow: 0 4px 12px rgba(0,0,0,0.04);">
+                        <div>
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <span style="font-size: 2rem;">${rec.icon}</span>
+                                    <div>
+                                        <h4 style="font-family: var(--font-heading); color: var(--wood-dark); margin: 0; font-size: 1.05rem;">${rec.name}</h4>
+                                        <small style="color: var(--text-secondary); font-size: 0.78rem;">Requer Mercado Nv. ${rec.minMercadoLevel}</small>
+                                    </div>
+                                </div>
+                                <span style="background: rgba(212,175,55,0.25); color: var(--wood-dark); font-weight: bold; padding: 4px 10px; border-radius: 20px; font-size: 0.95rem; border: 1px solid var(--gold);">
+                                    +${rec.goldGain} 🪙
+                                </span>
+                            </div>
+                            <p style="font-size: 0.85rem; color: var(--text-secondary); margin: 0 0 14px 0; line-height: 1.4;">${rec.desc}</p>
+                            <div style="margin-bottom: 16px;">
+                                <span style="font-size: 0.75rem; font-weight: bold; color: var(--wood-dark); display: block; margin-bottom: 6px; text-transform: uppercase;">Custos de Materiais:</span>
+                                <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                                    ${costBadges}
+                                </div>
+                            </div>
+                        </div>
+                        <button type="button" class="btn primary-btn btn-mint-gold" data-recipe-id="${rec.id}" ${(!canLevel || !canAfford) ? 'disabled' : ''} style="width: 100%; padding: 10px; font-size: 0.95rem; font-weight: bold;">
+                            ${!canLevel ? `🔒 Requer Mercado Nv. ${rec.minMercadoLevel}` : (canAfford ? `⚒️ Executar (+${rec.goldGain} 🪙)` : '⚠️ Recursos Insuficientes')}
+                        </button>
+                    </div>
+                `;
+            }).join('')}
+        </div>
+    `;
+
+    // Bind mint buttons
+    container.querySelectorAll('.btn-mint-gold').forEach(btn => {
+        btn.onclick = () => {
+            const rId = btn.getAttribute('data-recipe-id');
+            const res = mintGold(rId);
+            if (res.success) {
+                updateResourceUI();
+                renderMercado();
+                const toast = document.createElement('div');
+                toast.className = 'gm-toast';
+                toast.style.cssText = 'position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: #27ae60; color: #fff; padding: 12px 24px; border-radius: 25px; font-weight: bold; z-index: 10000; box-shadow: 0 6px 20px rgba(0,0,0,0.25);';
+                toast.textContent = `🪙 +${res.goldGain} Moedas de Ouro cunhadas com sucesso!`;
+                document.body.appendChild(toast);
+                setTimeout(() => toast.remove(), 2500);
+            } else {
+                alert(res.reason || "Não foi possível realizar esta operação.");
+            }
+        };
+    });
+}
+
+if (typeof window !== 'undefined') {
+    window.addEventListener('felineas_settings_changed', () => {
+        if (document.body.classList.contains('in-game')) {
+            try {
+                updateUI();
+                updateStatsUI();
+            } catch(e) {}
+        }
     });
 }
 

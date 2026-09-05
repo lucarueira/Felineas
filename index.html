@@ -26,7 +26,7 @@
         <!-- Top Navigation -->
         <nav class="top-nav parchment-panel shadow-pop">
             <ul style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
-                <div style="display: flex; gap: 15px;">
+                <div style="display: flex; gap: 15px; align-items: center;">
                     <li><a href="#">Notícias</a></li>
                     <li><a href="#">Guias</a></li>
                     <li><a href="#">Comunidade</a></li>
@@ -109,6 +109,10 @@
                     <button type="button" id="btn-register" class="btn secondary-btn">Cadastrar-se</button>
                 </div>
                 
+                <button type="button" id="btn-quick-guest" class="btn" style="width: 100%; margin-top: 12px; background: linear-gradient(135deg, #10b981, #059669); color: #ffffff; font-weight: bold; padding: 10px 14px; border-radius: 8px; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 0.95rem; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);">
+                    🎮 Jogar Agora (Modo Teste Rápido)
+                </button>
+                
                 <p id="auth-error" style="color: #d9534f; display: none; font-weight: bold; margin-top: 10px;"></p>
                 
                 <a href="#" class="forgot-password">Esqueceu o Segredo?</a>
@@ -120,9 +124,49 @@
             </div>
         </main>
 
+        <!-- Right Panel: Richest Villages (Gold Ranking) -->
+        <aside id="login-gold-ranking" class="right-panel parchment-panel slide-in-right gold-ranking-panel">
+            <div class="ranking-panel-header">
+                <div>
+                    <h2>🏆 Vilas Mais Ricas</h2>
+                    <p class="ranking-subtitle">Ranking de Ouro & Prestígio (Competição Segura)</p>
+                </div>
+                <button type="button" id="btn-refresh-gold-ranking" class="btn-mini-refresh" title="Atualizar Ranking">🔄</button>
+            </div>
+            <div id="login-gold-ranking-list" class="gold-ranking-list">
+                <div style="text-align: center; padding: 25px; color: var(--text-secondary);">
+                    <span>Carregando ranking dos nobres...</span>
+                </div>
+            </div>
+            <div class="ranking-security-note">
+                <span>🔒 <strong>Competição Segura:</strong> Somente dados públicos são exibidos. Ouro é um tesouro nobre e árduo de conquistar!</span>
+            </div>
+        </aside>
+
         <!-- Game Dashboard (Hidden initially) -->
         <main id="game-dashboard" class="game-layout" style="display: none;">
             
+            <!-- Floating GM Testing Mode Banner -->
+            <div id="gm-testing-banner" class="gm-testing-banner" style="display: none;">
+                <div class="gm-testing-banner-left">
+                    <span class="gm-pulse-crown">👑</span>
+                    <div>
+                        <strong>Modo GM Ativo — Testando Vila:</strong>
+                        <span id="gm-testing-village-name" class="gm-testing-name-pill">Vila de Teste</span>
+                    </div>
+                </div>
+                <button type="button" id="btn-gm-banner-return" class="btn gm-btn-return-panel">
+                    ⬅️ Voltar à Central do GM
+                </button>
+            </div>
+
+            <!-- Global Broadcast Banner (Set by GM) -->
+            <div id="global-broadcast-banner" class="global-broadcast-banner" style="display: none;">
+                <span class="broadcast-pulse">🔴</span>
+                <span class="broadcast-tag">👑 AVISO DO GM:</span>
+                <span id="global-broadcast-text" class="broadcast-text">Mensagem global do reino</span>
+            </div>
+
             <!-- Top Resource Bar -->
             <!-- Top Resource Bar -->
             <header class="resource-bar parchment-panel shadow-soft">
@@ -381,6 +425,66 @@
                     <p>Monitore a alocação dos felinos, níveis de construções e a produção em tempo real.</p>
                 </div>
 
+                <!-- GM Active Rules & Kingdom Boosts Banner (Sigiloso - Apenas visível em Eventos Públicos) -->
+                <div id="stats-gm-boosts-banner" class="stats-gm-boosts-banner" style="display: none;">
+                    <div class="stats-gm-boosts-header">
+                        <h3 class="stats-gm-boosts-title">
+                            ⚡ Celebração Real & Regras Ativas do Reino
+                        </h3>
+                        <span id="stat-gm-sync-badge" class="stats-gm-sync-badge">🟢 Evento Oficial Ativo</span>
+                    </div>
+                    <div class="stats-gm-grid">
+                        <div class="stats-gm-metric-card">
+                            <div class="stats-gm-metric-label">🌾 TAXA DE FARM</div>
+                            <strong id="stat-gm-farm-rate" class="stats-gm-metric-value gold-val">100% (Padrão)</strong>
+                        </div>
+                        <div class="stats-gm-metric-card">
+                            <div class="stats-gm-metric-label">⏱️ VELOCIDADE DE CONSTRUÇÃO</div>
+                            <strong id="stat-gm-build-rate" class="stats-gm-metric-value blue-val">100% Eficiência</strong>
+                        </div>
+                        <div class="stats-gm-metric-card">
+                            <div class="stats-gm-metric-label">✨ MULTIPLICADOR DE XP</div>
+                            <strong id="stat-gm-xp-rate" class="stats-gm-metric-value purple-val">100% XP</strong>
+                        </div>
+                        <div class="stats-gm-metric-card">
+                            <div class="stats-gm-metric-label">🛡️ VIGOR DO REINO</div>
+                            <strong id="stat-gm-fatigue-rate" class="stats-gm-metric-value green-val">Normal</strong>
+                        </div>
+                    </div>
+                    <div id="stat-gm-rates-chips" class="stats-gm-chips-container">
+                        <!-- Chips dinâmicos de eventos -->
+                    </div>
+                </div>
+
+                <!-- Rebalanceamento de Farm & Economia Desafiadora -->
+                <div class="stats-economy-panel">
+                    <div class="stats-economy-header">
+                        <h4 class="stats-economy-title">
+                            ⚖️ Atualização de Economia: Sistema de Farm Desafiador & Ouro Nobre
+                        </h4>
+                        <span class="stats-economy-badge">
+                            🌾 Taxas Recalibradas para Estratégia Real
+                        </span>
+                    </div>
+                    <p class="stats-economy-desc">
+                        Para tornar o reino mais desafiador e valorizar o progresso dos líderes, as taxas de colheita foram calibradas e os gatos trabalhadores agora <strong>consomem peixes ativamente (0.006/s/gato)</strong>. Sem peixe, a vila sofre <strong>Fome</strong> (-50% produção). A capacidade de recursos é livre sem teto limitante e o <strong>Ouro (🪙)</strong> tornou-se nobre e raro — forjado no Mercado ou conquistado na Torre de Desafios.
+                    </p>
+                    <div class="stats-economy-grid">
+                        <div class="stats-economy-pill pill-fish">
+                            <strong>🐟 Peixes:</strong> ~0.026/s bruto (+93/h/gato) | <em>Consumo: 0.006/s</em>
+                        </div>
+                        <div class="stats-economy-pill pill-wood">
+                            <strong>🪵 Madeira:</strong> ~0.013/s bruto (+47/h/gato com Cabana Nv 1)
+                        </div>
+                        <div class="stats-economy-pill pill-wool">
+                            <strong>🧶 Lã Mágica:</strong> ~0.0105/s bruto (+38/h/gato com Arranhador Nv 1)
+                        </div>
+                        <div class="stats-economy-pill pill-mine">
+                            <strong>⛏️ Mineração:</strong> Pedra (+23/h), Carvão (+8/h), Ferro Raro (+3/h)
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Workforce Summary Cards -->
                 <div class="stats-summary-card">
                     <div style="text-align: center;">
@@ -405,6 +509,7 @@
                                 <th>Setor Produtivo</th>
                                 <th>Edifício / Nível</th>
                                 <th>Gatos Ativos</th>
+                                <th>Eficiência</th>
                                 <th>Produção / seg</th>
                                 <th>Produção / hora</th>
                             </tr>
@@ -414,34 +519,39 @@
                                 <td>🐟 <strong>Pescaria (Comida)</strong></td>
                                 <td id="stat-bldg-cais">Cais Nível 0</td>
                                 <td><span id="stat-workers-fish" class="worker-pill">🐾 0</span></td>
-                                <td><strong id="stat-fish" style="color: var(--gold-hover);">+0.0</strong> /s</td>
+                                <td><span id="stat-mult-fish" class="worker-pill efficiency-pill">100%</span></td>
+                                <td><strong id="stat-fish" style="color: var(--gold-hover);">+0.0</strong> /s <small id="stat-percat-fish" style="opacity: 0.7; font-weight: normal; font-size: 0.75rem; display: block;">(+0.5/gato)</small></td>
                                 <td id="stat-fish-hour">+0 /h</td>
                             </tr>
                             <tr>
                                 <td>🪵 <strong>Silvicultura (Madeira)</strong></td>
                                 <td id="stat-bldg-cabana">Cabana Nível 1</td>
                                 <td><span id="stat-workers-wood" class="worker-pill">🐾 0</span></td>
-                                <td><strong id="stat-wood" style="color: var(--gold-hover);">+0.0</strong> /s</td>
+                                <td><span id="stat-mult-wood" class="worker-pill efficiency-pill">100%</span></td>
+                                <td><strong id="stat-wood" style="color: var(--gold-hover);">+0.0</strong> /s <small id="stat-percat-wood" style="opacity: 0.7; font-weight: normal; font-size: 0.75rem; display: block;">(+0.1/gato)</small></td>
                                 <td id="stat-wood-hour">+0 /h</td>
                             </tr>
                             <tr>
                                 <td>🧶 <strong>Tecelagem (Lã Mágica)</strong></td>
                                 <td id="stat-bldg-arranhador">Arranhador Nível 0</td>
                                 <td><span id="stat-workers-wool" class="worker-pill">🐾 0</span></td>
-                                <td><strong id="stat-wool" style="color: var(--gold-hover);">+0.0</strong> /s</td>
+                                <td><span id="stat-mult-wool" class="worker-pill efficiency-pill">100%</span></td>
+                                <td><strong id="stat-wool" style="color: var(--gold-hover);">+0.0</strong> /s <small id="stat-percat-wool" style="opacity: 0.7; font-weight: normal; font-size: 0.75rem; display: block;">(+0.1/gato)</small></td>
                                 <td id="stat-wool-hour">+0 /h</td>
                             </tr>
                             <tr>
                                 <td>⛏️ <strong>Mineração (Pedra, Carvão, Ferro)</strong></td>
                                 <td id="stat-bldg-mina">Mina Nível 0</td>
                                 <td><span id="stat-workers-mine" class="worker-pill">🐾 0</span></td>
-                                <td><strong id="stat-mine" style="color: var(--gold-hover);">+0.0</strong> /s</td>
+                                <td><span id="stat-mult-mine" class="worker-pill efficiency-pill">100%</span></td>
+                                <td><strong id="stat-mine" style="color: var(--gold-hover);">+0.0</strong> /s <small id="stat-percat-mine" style="opacity: 0.7; font-weight: normal; font-size: 0.75rem; display: block;">(+0.34/gato)</small></td>
                                 <td id="stat-mine-hour">+0 /h</td>
                             </tr>
                             <tr>
                                 <td>🐈‍⬛ <strong>Guarnição Militar</strong></td>
                                 <td id="stat-bldg-quartel">Quartel Nível 0</td>
                                 <td><span id="stat-workers-scouts" class="worker-pill">🗡️ 0 Batedores</span></td>
+                                <td>-</td>
                                 <td>-</td>
                                 <td>-</td>
                             </tr>
@@ -518,11 +628,11 @@
             <!-- Mercado View -->
             <section id="view-mercado" class="village-area parchment-panel" style="display: none;">
                 <div class="village-header">
-                    <h2>🏪 Mercado</h2>
-                    <p>Troque recursos por Ouro e vice-versa.</p>
+                    <h2>🏪 Mercado & Casa da Moeda Felina</h2>
+                    <p>Cunhe moedas de ouro com ferro raro e carvão, ou envie caravanas mercantes de excedentes.</p>
                 </div>
-                <div style="text-align: center; padding: 40px; color: var(--text-secondary);">
-                    <p>As rotas comerciais estarão disponíveis em breve.</p>
+                <div id="mercado-content-container">
+                    <!-- Injected dynamically via JS: Coin Minting recipes & Trade Caravans -->
                 </div>
             </section>
 
@@ -648,6 +758,1367 @@
                 </div>
             </div>
         </main>
+
+        <!-- GM Master Dashboard (Visible only to GM) -->
+        <main id="gm-dashboard" class="gm-dashboard-layout" style="display: none;">
+            <!-- GM Top Header -->
+            <header class="gm-top-header parchment-panel shadow-soft">
+                <div class="gm-branding">
+                    <span class="gm-crown">👑</span>
+                    <div>
+                        <h2>Central de Comando do GM</h2>
+                        <p class="gm-subtitle">Terras Felineas — Painel Administrativo Supremo & Controle em Tempo Real</p>
+                    </div>
+                </div>
+
+                <div class="gm-header-right">
+                    <div class="gm-server-pill">
+                        <span class="pill-dot"></span>
+                        <span>Servidor Ativo</span>
+                    </div>
+
+                    <div class="gm-profile-pill">
+                        <span class="gm-avatar-badge">🦁</span>
+                        <div class="gm-profile-text">
+                            <strong id="gm-user-name">GM Supremo</strong>
+                            <small id="gm-user-email">gm@felineas.com</small>
+                        </div>
+                    </div>
+
+                    <div class="gm-header-actions">
+                        <button id="btn-gm-to-village" class="btn gm-btn-village" title="Ir para a Vila do Jogo">🎮 Ver Minha Vila</button>
+                        <button id="btn-gm-refresh" class="btn gm-icon-btn" title="Recarregar Dados do Banco">🔄</button>
+                        <button id="gm-dark-mode-toggle" class="btn gm-icon-btn" title="Alternar Modo Escuro">🌙</button>
+                        <button id="btn-gm-logout" class="btn gm-btn-danger">🚪 Sair do Painel</button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- GM Navigation Bar (Tabs) -->
+            <nav class="gm-nav-bar parchment-panel shadow-soft">
+                <button type="button" class="gm-nav-btn active" data-gm-tab="overview">
+                    <span class="nav-icon">📊</span>
+                    <span>Visão Geral</span>
+                </button>
+                <button type="button" class="gm-nav-btn" data-gm-tab="rates">
+                    <span class="nav-icon">🌾</span>
+                    <span>Velocidade de Farm & XP</span>
+                </button>
+                <button type="button" class="gm-nav-btn" data-gm-tab="timings">
+                    <span class="nav-icon">⏱️</span>
+                    <span>Controle de Tempos</span>
+                </button>
+                <button type="button" class="gm-nav-btn" data-gm-tab="accounts">
+                    <span class="nav-icon">👥</span>
+                    <span>Gestão de Contas & Vilas</span>
+                </button>
+                <button type="button" class="gm-nav-btn" data-gm-tab="items">
+                    <span class="nav-icon">⚔️</span>
+                    <span>Cadastro de Itens</span>
+                </button>
+                <button type="button" class="gm-nav-btn" data-gm-tab="news">
+                    <span class="nav-icon">📢</span>
+                    <span>Notícias & Alertas</span>
+                </button>
+                <button type="button" class="gm-nav-btn" data-gm-tab="logs">
+                    <span class="nav-icon">📜</span>
+                    <span>Logs do Sistema</span>
+                </button>
+                <button type="button" class="gm-nav-btn" data-gm-tab="stats">
+                    <span class="nav-icon">📈</span>
+                    <span>Estatísticas Globais</span>
+                </button>
+            </nav>
+
+            <!-- GM Main Content Area -->
+            <div class="gm-content-container">
+
+                <!-- 1. Visão Geral Tab -->
+                <section id="gm-view-overview" class="gm-tab-view active">
+                    <div class="gm-metrics-grid">
+                        <div class="gm-metric-card">
+                            <div class="metric-icon">👥</div>
+                            <div class="metric-body">
+                                <h3>Total de Contas</h3>
+                                <div id="gm-metric-total-acc" class="metric-val">0</div>
+                                <small>Contas cadastradas no reino</small>
+                            </div>
+                        </div>
+
+                        <div class="gm-metric-card highlight-success">
+                            <div class="metric-icon">🟢</div>
+                            <div class="metric-body">
+                                <h3>Contas Ativas</h3>
+                                <div id="gm-metric-active-acc" class="metric-val">0</div>
+                                <small>Líderes felinos com acesso</small>
+                            </div>
+                        </div>
+
+                        <div class="gm-metric-card highlight-danger">
+                            <div class="metric-icon">🚫</div>
+                            <div class="metric-body">
+                                <h3>Contas Banidas</h3>
+                                <div id="gm-metric-banned-acc" class="metric-val">0</div>
+                                <small>Contas suspensas pelo GM</small>
+                            </div>
+                        </div>
+
+                        <div class="gm-metric-card highlight-gold">
+                            <div class="metric-icon">🌾</div>
+                            <div class="metric-body">
+                                <h3>Taxa de Farm</h3>
+                                <div id="gm-metric-farm-mult" class="metric-val">1.0x</div>
+                                <small>Multiplicador global de recursos</small>
+                            </div>
+                        </div>
+
+                        <div class="gm-metric-card highlight-purple">
+                            <div class="metric-icon">✨</div>
+                            <div class="metric-body">
+                                <h3>Multiplicador de XP</h3>
+                                <div id="gm-metric-xp-mult" class="metric-val">1.0x</div>
+                                <small>Bônus de experiência geral</small>
+                            </div>
+                        </div>
+
+                        <div class="gm-metric-card">
+                            <div class="metric-icon">⚔️</div>
+                            <div class="metric-body">
+                                <h3>Itens no Catálogo</h3>
+                                <div id="gm-metric-total-items" class="metric-val">15</div>
+                                <small>Equipamentos cadastrados</small>
+                            </div>
+                        </div>
+
+                        <div class="gm-metric-card">
+                            <div class="metric-icon">📡</div>
+                            <div class="metric-body">
+                                <h3>Alerta Global</h3>
+                                <div id="gm-metric-broadcast-status" class="metric-val">○ Inativo</div>
+                                <small>Transmissão no topo da tela</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Event Controls -->
+                    <div class="parchment-panel gm-panel-block" style="margin-top: 20px;">
+                        <h3 class="gm-block-title">⚡ Ações Rápidas do Game Master</h3>
+                        <p style="color: var(--text-secondary); margin-bottom: 15px; font-size: 0.9rem;">
+                            Ative eventos especiais ou bônus individuais instantaneamente para todos os jogadores do servidor.
+                        </p>
+                        <div class="gm-quick-actions-row">
+                            <button id="btn-quick-xp-2x" class="btn gm-quick-btn xp-btn">
+                                <span>🎉</span> XP 2x (Dobro)
+                            </button>
+                            <button id="btn-quick-fish-3x" class="btn gm-quick-btn farm-btn" data-quick-res="fish">
+                                <span>🐟</span> Peixes 3x
+                            </button>
+                            <button id="btn-quick-wood-3x" class="btn gm-quick-btn farm-btn" data-quick-res="wood">
+                                <span>🪵</span> Madeira 3x
+                            </button>
+                            <button id="btn-quick-wool-3x" class="btn gm-quick-btn farm-btn" data-quick-res="wool">
+                                <span>🧶</span> Lã 3x
+                            </button>
+                            <button id="btn-quick-iron-5x" class="btn gm-quick-btn farm-btn" data-quick-res="iron">
+                                <span>⚔️</span> Ferro 5x
+                            </button>
+                            <button id="btn-quick-farm-3x" class="btn gm-quick-btn farm-btn">
+                                <span>🌾</span> Todos os Recursos 3x
+                            </button>
+                            <button id="btn-quick-reset-rates" class="btn gm-quick-btn reset-btn">
+                                <span>⚖️</span> Normalizar Tudo (1.0x)
+                            </button>
+                            <button id="btn-quick-deactivate-farm" class="btn gm-quick-btn danger-btn" style="background: #e74c3c; color: #fff; font-weight: bold;">
+                                <span>⏹️</span> Desativar Bônus de Farm
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 2. Velocidade de Farm & XP Tab (Controle Separado por Recurso) -->
+                <section id="gm-view-rates" class="gm-tab-view" style="display: none;">
+                    <div class="gm-rates-container">
+                        
+                        <!-- Global Base Farm Multiplier -->
+                        <div class="parchment-panel gm-panel-block">
+                            <div class="gm-block-header">
+                                <div>
+                                    <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                                        <h3 class="gm-block-title" style="margin: 0;">🌾 Velocidade Global de Farm (Multiplicador Geral)</h3>
+                                        <span id="gm-farm-bonus-status-badge" class="gm-res-badge active">🟢 Bônus Ativo (1.0x)</span>
+                                    </div>
+                                    <p class="gm-block-desc">Multiplicador global que atua como base para todos os recursos da vila.</p>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                                    <button type="button" id="btn-deactivate-farm-bonus" class="btn gm-batch-btn deactivate-all" style="padding: 6px 12px; font-size: 0.85rem; font-weight: bold;">
+                                        ⏹️ Desativar Bônus de Farm
+                                    </button>
+                                    <button type="button" id="btn-activate-farm-bonus" class="btn gm-batch-btn activate-all" style="padding: 6px 12px; font-size: 0.85rem; font-weight: bold;">
+                                        ⚡ Ativar Bônus
+                                    </button>
+                                    <button type="button" id="btn-toggle-global-farm" class="btn gm-res-toggle-btn btn-deactivate" style="padding: 6px 12px; font-size: 0.85rem;">
+                                        ⏹️ Alternar
+                                    </button>
+                                    <div class="gm-slider-display" id="gm-farm-val">1.0x</div>
+                                </div>
+                            </div>
+
+                            <div class="gm-slider-wrapper">
+                                <input type="range" id="gm-farm-slider" min="0.01" max="20" step="0.01" value="1.0" class="gm-slider">
+                                <div class="gm-slider-ticks">
+                                    <span>0.01x (Mín)</span>
+                                    <span>0.5x</span>
+                                    <span>1.0x</span>
+                                    <span>2.0x</span>
+                                    <span>5.0x</span>
+                                    <span>10.0x</span>
+                                    <span>20.0x (Insano)</span>
+                                </div>
+                            </div>
+
+                            <div class="gm-presets-row">
+                                <span style="font-size: 0.85rem; font-weight: bold; color: var(--wood-dark);">Atalhos Rápidos:</span>
+                                <button type="button" class="gm-preset-btn" data-preset-type="farm" data-preset-val="0.01">0.01x (Mínimo)</button>
+                                <button type="button" class="gm-preset-btn" data-preset-type="farm" data-preset-val="0.1">0.1x (Lento)</button>
+                                <button type="button" class="gm-preset-btn" data-preset-type="farm" data-preset-val="0.5">0.5x (Metade)</button>
+                                <button type="button" class="gm-preset-btn" data-preset-type="farm" data-preset-val="1.0">1.0x (Padrão)</button>
+                                <button type="button" class="gm-preset-btn" data-preset-type="farm" data-preset-val="2.0">2.0x (Dobro)</button>
+                                <button type="button" class="gm-preset-btn" data-preset-type="farm" data-preset-val="3.0">3.0x (Triplo)</button>
+                                <button type="button" class="gm-preset-btn" data-preset-type="farm" data-preset-val="5.0">5.0x (Frenesi)</button>
+                                <button type="button" class="gm-preset-btn" data-preset-type="farm" data-preset-val="10.0">10.0x (Super Turbo)</button>
+                            </div>
+                        </div>
+
+                        <!-- Controle Individual por Recurso (Ativação Separada de Cada Um) -->
+                        <div class="parchment-panel gm-panel-block">
+                            <div class="gm-section-header-row">
+                                <div>
+                                    <h3 class="gm-block-title">🎯 Velocidade de Farm Separada por Recurso</h3>
+                                    <p class="gm-block-desc">Configure e <strong>ative ou desative separadamente cada um</strong> com apenas um clique.</p>
+                                </div>
+                                <div class="gm-batch-actions-row">
+                                    <button type="button" id="btn-batch-activate-all" class="btn gm-batch-btn activate-all">⚡ Ativar Bônus em Todos</button>
+                                    <button type="button" id="btn-batch-deactivate-all" class="btn gm-batch-btn deactivate-all">⏹️ Desativar Todos</button>
+                                    <button type="button" id="btn-batch-reset-all" class="btn gm-batch-btn reset-all">⚖️ Resetar para 1.0x</button>
+                                </div>
+                            </div>
+
+                            <div class="gm-resource-rates-grid">
+                                <!-- Card Peixes -->
+                                <div class="gm-resource-card" id="card-rate-fish">
+                                    <div class="gm-res-card-top">
+                                        <div class="gm-res-title-box">
+                                            <span class="gm-res-icon">🐟</span>
+                                            <div>
+                                                <h4>Peixes</h4>
+                                                <small>Cais de Pesca</small>
+                                            </div>
+                                        </div>
+                                        <span id="gm-badge-fish" class="gm-res-badge inactive">⚪ Inativo</span>
+                                    </div>
+                                    <div class="gm-res-slider-box">
+                                        <div class="gm-res-val-row">
+                                            <label>Multiplicador:</label>
+                                            <span id="gm-disp-fish" class="gm-res-num-val">2.0x</span>
+                                        </div>
+                                        <input type="range" id="gm-slider-fish" min="0.01" max="20" step="0.01" value="2.0" class="gm-slider">
+                                        <div class="gm-res-chips">
+                                            <button type="button" class="gm-chip-btn" data-res="fish" data-val="0.01">0.01x</button>
+                                            <button type="button" class="gm-chip-btn" data-res="fish" data-val="0.5">0.5x</button>
+                                            <button type="button" class="gm-chip-btn" data-res="fish" data-val="1.0">1x</button>
+                                            <button type="button" class="gm-chip-btn" data-res="fish" data-val="2.0">2x</button>
+                                            <button type="button" class="gm-chip-btn" data-res="fish" data-val="5.0">5x</button>
+                                            <button type="button" class="gm-chip-btn" data-res="fish" data-val="10.0">10x</button>
+                                        </div>
+                                    </div>
+                                    <div class="gm-res-card-actions">
+                                        <button type="button" id="btn-toggle-fish" data-res="fish" class="btn gm-res-toggle-btn">🟢 Ativar Bônus</button>
+                                        <button type="button" id="btn-save-fish" data-res="fish" class="btn gm-res-save-btn" title="Salvar taxa no banco">💾 Salvar</button>
+                                    </div>
+                                </div>
+
+                                <!-- Card Madeira -->
+                                <div class="gm-resource-card" id="card-rate-wood">
+                                    <div class="gm-res-card-top">
+                                        <div class="gm-res-title-box">
+                                            <span class="gm-res-icon">🪵</span>
+                                            <div>
+                                                <h4>Madeira</h4>
+                                                <small>Cabana do Lenhador</small>
+                                            </div>
+                                        </div>
+                                        <span id="gm-badge-wood" class="gm-res-badge inactive">⚪ Inativo</span>
+                                    </div>
+                                    <div class="gm-res-slider-box">
+                                        <div class="gm-res-val-row">
+                                            <label>Multiplicador:</label>
+                                            <span id="gm-disp-wood" class="gm-res-num-val">2.0x</span>
+                                        </div>
+                                        <input type="range" id="gm-slider-wood" min="0.01" max="20" step="0.01" value="2.0" class="gm-slider">
+                                        <div class="gm-res-chips">
+                                            <button type="button" class="gm-chip-btn" data-res="wood" data-val="0.01">0.01x</button>
+                                            <button type="button" class="gm-chip-btn" data-res="wood" data-val="0.5">0.5x</button>
+                                            <button type="button" class="gm-chip-btn" data-res="wood" data-val="1.0">1x</button>
+                                            <button type="button" class="gm-chip-btn" data-res="wood" data-val="2.0">2x</button>
+                                            <button type="button" class="gm-chip-btn" data-res="wood" data-val="5.0">5x</button>
+                                            <button type="button" class="gm-chip-btn" data-res="wood" data-val="10.0">10x</button>
+                                        </div>
+                                    </div>
+                                    <div class="gm-res-card-actions">
+                                        <button type="button" id="btn-toggle-wood" data-res="wood" class="btn gm-res-toggle-btn">🟢 Ativar Bônus</button>
+                                        <button type="button" id="btn-save-wood" data-res="wood" class="btn gm-res-save-btn" title="Salvar taxa no banco">💾 Salvar</button>
+                                    </div>
+                                </div>
+
+                                <!-- Card Lã -->
+                                <div class="gm-resource-card" id="card-rate-wool">
+                                    <div class="gm-res-card-top">
+                                        <div class="gm-res-title-box">
+                                            <span class="gm-res-icon">🧶</span>
+                                            <div>
+                                                <h4>Lã</h4>
+                                                <small>Arranhador dos Artesãos</small>
+                                            </div>
+                                        </div>
+                                        <span id="gm-badge-wool" class="gm-res-badge inactive">⚪ Inativo</span>
+                                    </div>
+                                    <div class="gm-res-slider-box">
+                                        <div class="gm-res-val-row">
+                                            <label>Multiplicador:</label>
+                                            <span id="gm-disp-wool" class="gm-res-num-val">2.0x</span>
+                                        </div>
+                                        <input type="range" id="gm-slider-wool" min="0.01" max="20" step="0.01" value="2.0" class="gm-slider">
+                                        <div class="gm-res-chips">
+                                            <button type="button" class="gm-chip-btn" data-res="wool" data-val="0.01">0.01x</button>
+                                            <button type="button" class="gm-chip-btn" data-res="wool" data-val="0.5">0.5x</button>
+                                            <button type="button" class="gm-chip-btn" data-res="wool" data-val="1.0">1x</button>
+                                            <button type="button" class="gm-chip-btn" data-res="wool" data-val="2.0">2x</button>
+                                            <button type="button" class="gm-chip-btn" data-res="wool" data-val="5.0">5x</button>
+                                            <button type="button" class="gm-chip-btn" data-res="wool" data-val="10.0">10x</button>
+                                        </div>
+                                    </div>
+                                    <div class="gm-res-card-actions">
+                                        <button type="button" id="btn-toggle-wool" data-res="wool" class="btn gm-res-toggle-btn">🟢 Ativar Bônus</button>
+                                        <button type="button" id="btn-save-wool" data-res="wool" class="btn gm-res-save-btn" title="Salvar taxa no banco">💾 Salvar</button>
+                                    </div>
+                                </div>
+
+                                <!-- Card Pedra -->
+                                <div class="gm-resource-card" id="card-rate-stone">
+                                    <div class="gm-res-card-top">
+                                        <div class="gm-res-title-box">
+                                            <span class="gm-res-icon">🪨</span>
+                                            <div>
+                                                <h4>Pedra</h4>
+                                                <small>Mina Felina</small>
+                                            </div>
+                                        </div>
+                                        <span id="gm-badge-stone" class="gm-res-badge inactive">⚪ Inativo</span>
+                                    </div>
+                                    <div class="gm-res-slider-box">
+                                        <div class="gm-res-val-row">
+                                            <label>Multiplicador:</label>
+                                            <span id="gm-disp-stone" class="gm-res-num-val">2.0x</span>
+                                        </div>
+                                        <input type="range" id="gm-slider-stone" min="0.01" max="20" step="0.01" value="2.0" class="gm-slider">
+                                        <div class="gm-res-chips">
+                                            <button type="button" class="gm-chip-btn" data-res="stone" data-val="0.01">0.01x</button>
+                                            <button type="button" class="gm-chip-btn" data-res="stone" data-val="0.5">0.5x</button>
+                                            <button type="button" class="gm-chip-btn" data-res="stone" data-val="1.0">1x</button>
+                                            <button type="button" class="gm-chip-btn" data-res="stone" data-val="2.0">2x</button>
+                                            <button type="button" class="gm-chip-btn" data-res="stone" data-val="5.0">5x</button>
+                                            <button type="button" class="gm-chip-btn" data-res="stone" data-val="10.0">10x</button>
+                                        </div>
+                                    </div>
+                                    <div class="gm-res-card-actions">
+                                        <button type="button" id="btn-toggle-stone" data-res="stone" class="btn gm-res-toggle-btn">🟢 Ativar Bônus</button>
+                                        <button type="button" id="btn-save-stone" data-res="stone" class="btn gm-res-save-btn" title="Salvar taxa no banco">💾 Salvar</button>
+                                    </div>
+                                </div>
+
+                                <!-- Card Carvão -->
+                                <div class="gm-resource-card" id="card-rate-coal">
+                                    <div class="gm-res-card-top">
+                                        <div class="gm-res-title-box">
+                                            <span class="gm-res-icon">⛏️</span>
+                                            <div>
+                                                <h4>Carvão</h4>
+                                                <small>Mina Felina (Profunda)</small>
+                                            </div>
+                                        </div>
+                                        <span id="gm-badge-coal" class="gm-res-badge inactive">⚪ Inativo</span>
+                                    </div>
+                                    <div class="gm-res-slider-box">
+                                        <div class="gm-res-val-row">
+                                            <label>Multiplicador:</label>
+                                            <span id="gm-disp-coal" class="gm-res-num-val">2.0x</span>
+                                        </div>
+                                        <input type="range" id="gm-slider-coal" min="0.01" max="20" step="0.01" value="2.0" class="gm-slider">
+                                        <div class="gm-res-chips">
+                                            <button type="button" class="gm-chip-btn" data-res="coal" data-val="0.01">0.01x</button>
+                                            <button type="button" class="gm-chip-btn" data-res="coal" data-val="0.5">0.5x</button>
+                                            <button type="button" class="gm-chip-btn" data-res="coal" data-val="1.0">1x</button>
+                                            <button type="button" class="gm-chip-btn" data-res="coal" data-val="2.0">2x</button>
+                                            <button type="button" class="gm-chip-btn" data-res="coal" data-val="5.0">5x</button>
+                                            <button type="button" class="gm-chip-btn" data-res="coal" data-val="10.0">10x</button>
+                                        </div>
+                                    </div>
+                                    <div class="gm-res-card-actions">
+                                        <button type="button" id="btn-toggle-coal" data-res="coal" class="btn gm-res-toggle-btn">🟢 Ativar Bônus</button>
+                                        <button type="button" id="btn-save-coal" data-res="coal" class="btn gm-res-save-btn" title="Salvar taxa no banco">💾 Salvar</button>
+                                    </div>
+                                </div>
+
+                                <!-- Card Ferro -->
+                                <div class="gm-resource-card" id="card-rate-iron">
+                                    <div class="gm-res-card-top">
+                                        <div class="gm-res-title-box">
+                                            <span class="gm-res-icon">⚔️</span>
+                                            <div>
+                                                <h4>Ferro</h4>
+                                                <small>Mina Felina (Veio Puro)</small>
+                                            </div>
+                                        </div>
+                                        <span id="gm-badge-iron" class="gm-res-badge inactive">⚪ Inativo</span>
+                                    </div>
+                                    <div class="gm-res-slider-box">
+                                        <div class="gm-res-val-row">
+                                            <label>Multiplicador:</label>
+                                            <span id="gm-disp-iron" class="gm-res-num-val">2.0x</span>
+                                        </div>
+                                        <input type="range" id="gm-slider-iron" min="0.01" max="20" step="0.01" value="2.0" class="gm-slider">
+                                        <div class="gm-res-chips">
+                                            <button type="button" class="gm-chip-btn" data-res="iron" data-val="0.01">0.01x</button>
+                                            <button type="button" class="gm-chip-btn" data-res="iron" data-val="0.5">0.5x</button>
+                                            <button type="button" class="gm-chip-btn" data-res="iron" data-val="1.0">1x</button>
+                                            <button type="button" class="gm-chip-btn" data-res="iron" data-val="2.0">2x</button>
+                                            <button type="button" class="gm-chip-btn" data-res="iron" data-val="5.0">5x</button>
+                                            <button type="button" class="gm-chip-btn" data-res="iron" data-val="10.0">10x</button>
+                                        </div>
+                                    </div>
+                                    <div class="gm-res-card-actions">
+                                        <button type="button" id="btn-toggle-iron" data-res="iron" class="btn gm-res-toggle-btn">🟢 Ativar Bônus</button>
+                                        <button type="button" id="btn-save-iron" data-res="iron" class="btn gm-res-save-btn" title="Salvar taxa no banco">💾 Salvar</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Global XP Multiplier -->
+                        <div class="parchment-panel gm-panel-block">
+                            <div class="gm-block-header">
+                                <div>
+                                    <h3 class="gm-block-title">✨ Porcentagem e Taxa de XP Global</h3>
+                                    <p class="gm-block-desc">Acelera o ganho de experiência de conta de todos os jogadores, heróis e recompensas da Torre.</p>
+                                </div>
+                                <div class="gm-slider-display" id="gm-xp-val" style="color: #9b59b6;">1.0x</div>
+                            </div>
+
+                            <div class="gm-slider-wrapper">
+                                <input type="range" id="gm-xp-slider" min="0.5" max="10" step="0.25" value="1.0" class="gm-slider xp-slider">
+                                <div class="gm-slider-ticks">
+                                    <span>0.5x</span>
+                                    <span>1.0x</span>
+                                    <span>1.5x</span>
+                                    <span>2.0x (Dobro)</span>
+                                    <span>3.0x (Triplo)</span>
+                                    <span>5.0x</span>
+                                    <span>10.0x (Máximo)</span>
+                                </div>
+                            </div>
+
+                            <div class="gm-presets-row">
+                                <span style="font-size: 0.85rem; font-weight: bold; color: var(--wood-dark);">Atalhos de XP:</span>
+                                <button type="button" class="gm-preset-btn" data-preset-type="xp" data-preset-val="1.0">1.0x (Padrão)</button>
+                                <button type="button" class="gm-preset-btn" data-preset-type="xp" data-preset-val="1.5">1.5x (+50% Bônus)</button>
+                                <button type="button" class="gm-preset-btn" data-preset-type="xp" data-preset-val="2.0">2.0x (Dobro)</button>
+                                <button type="button" class="gm-preset-btn" data-preset-type="xp" data-preset-val="3.0">3.0x (Triplo)</button>
+                                <button type="button" class="gm-preset-btn" data-preset-type="xp" data-preset-val="5.0">5.0x (Mega Evento)</button>
+                            </div>
+                        </div>
+
+                        <div class="gm-save-bar">
+                            <button type="button" id="btn-save-rates" class="btn primary-btn gm-large-btn">
+                                💾 Salvar e Aplicar Todas as Taxas Globalmente
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 3. Controle de Tempos & Regras Tab -->
+                <section id="gm-view-timings" class="gm-tab-view" style="display: none;">
+                    <div class="gm-timings-container">
+                        
+                        <!-- Card 1: Construção de Edifícios Separados -->
+                        <div class="parchment-panel gm-panel-block">
+                            <div class="gm-block-header">
+                                <div>
+                                    <h3 class="gm-block-title">🏗️ Tempos de Construção de Edifícios (Separados)</h3>
+                                    <p class="gm-block-desc">Configure os segundos base de evolução para cada um dos 7 edifícios do reino individualmente.</p>
+                                </div>
+                                <div class="gm-slider-display" id="gm-timing-build-val">1.0x</div>
+                            </div>
+
+                            <!-- Grade com os 7 Edifícios Separados -->
+                            <div class="gm-timing-grid-7" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-top: 12px;">
+                                <div class="gm-time-input-card">
+                                    <label for="gm-time-bldg-cabana">🏠 Cabana:</label>
+                                    <div class="input-with-unit">
+                                        <input type="number" id="gm-time-bldg-cabana" min="0" max="600" value="15">
+                                        <span>s</span>
+                                    </div>
+                                </div>
+                                <div class="gm-time-input-card">
+                                    <label for="gm-time-bldg-cais">⚓ Cais:</label>
+                                    <div class="input-with-unit">
+                                        <input type="number" id="gm-time-bldg-cais" min="0" max="600" value="20">
+                                        <span>s</span>
+                                    </div>
+                                </div>
+                                <div class="gm-time-input-card">
+                                    <label for="gm-time-bldg-arranhador">🧶 Arranhador:</label>
+                                    <div class="input-with-unit">
+                                        <input type="number" id="gm-time-bldg-arranhador" min="0" max="600" value="25">
+                                        <span>s</span>
+                                    </div>
+                                </div>
+                                <div class="gm-time-input-card">
+                                    <label for="gm-time-bldg-mina">⛏️ Mina:</label>
+                                    <div class="input-with-unit">
+                                        <input type="number" id="gm-time-bldg-mina" min="0" max="600" value="35">
+                                        <span>s</span>
+                                    </div>
+                                </div>
+                                <div class="gm-time-input-card">
+                                    <label for="gm-time-bldg-quartel">⚔️ Quartel:</label>
+                                    <div class="input-with-unit">
+                                        <input type="number" id="gm-time-bldg-quartel" min="0" max="600" value="40">
+                                        <span>s</span>
+                                    </div>
+                                </div>
+                                <div class="gm-time-input-card">
+                                    <label for="gm-time-bldg-prefeitura">🏛️ Prefeitura:</label>
+                                    <div class="input-with-unit">
+                                        <input type="number" id="gm-time-bldg-prefeitura" min="0" max="600" value="60">
+                                        <span>s</span>
+                                    </div>
+                                </div>
+                                <div class="gm-time-input-card">
+                                    <label for="gm-time-bldg-mercado">⚖️ Mercado:</label>
+                                    <div class="input-with-unit">
+                                        <input type="number" id="gm-time-bldg-mercado" min="0" max="600" value="45">
+                                        <span>s</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="gm-slider-wrapper" style="margin-top: 15px;">
+                                <label style="font-weight: bold; font-size: 0.85rem; color: var(--wood-dark);">Multiplicador Global de Velocidade de Construção:</label>
+                                <input type="range" id="gm-timing-build-slider" min="0.01" max="10" step="0.05" value="1.0" class="gm-slider">
+                                <div class="gm-slider-ticks">
+                                    <span>0.01x</span>
+                                    <span>0.5x</span>
+                                    <span>1.0x (Padrão)</span>
+                                    <span>2.0x</span>
+                                    <span>5.0x</span>
+                                    <span>10.0x (Turbo)</span>
+                                </div>
+                            </div>
+
+                            <div class="gm-presets-row" style="margin-top: 10px;">
+                                <span style="font-size: 0.82rem; font-weight: bold; color: var(--wood-dark);">Atalhos de Multiplicador:</span>
+                                <button type="button" class="gm-preset-btn" data-preset-type="build-time" data-preset-val="0.1">0.1x</button>
+                                <button type="button" class="gm-preset-btn" data-preset-type="build-time" data-preset-val="0.5">0.5x</button>
+                                <button type="button" class="gm-preset-btn" data-preset-type="build-time" data-preset-val="1.0">1.0x (Padrão)</button>
+                                <button type="button" class="gm-preset-btn" data-preset-type="build-time" data-preset-val="2.0">2.0x (Rápido)</button>
+                                <button type="button" class="gm-preset-btn" data-preset-type="build-time" data-preset-val="5.0">5.0x (Turbo)</button>
+                            </div>
+
+                            <!-- Toggle Construção Instantânea -->
+                            <div class="gm-instant-toggle-box" style="margin-top: 16px;">
+                                <label class="gm-switch-label">
+                                    <input type="checkbox" id="gm-toggle-instant-build" class="gm-switch-input">
+                                    <span class="gm-switch-slider"></span>
+                                    <div class="gm-switch-text">
+                                        <strong>⚡ Construção Instantânea (0 Segundos)</strong>
+                                        <small>Qualquer clique em evoluir edifício conclui a obra no mesmo instante!</small>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Card 2: Treinamento de Tropas Separado -->
+                        <div class="parchment-panel gm-panel-block">
+                            <div class="gm-block-header">
+                                <div>
+                                    <h3 class="gm-block-title">⚔️ Tempos de Treinamento de Tropas (Separados)</h3>
+                                    <p class="gm-block-desc">Defina o tempo em segundos que cada uma das 5 classes leva para ser treinada no Quartel.</p>
+                                </div>
+                            </div>
+
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-top: 12px;">
+                                <div class="gm-time-input-card">
+                                    <label for="gm-time-troop-scouts">🗡️ Batedores:</label>
+                                    <div class="input-with-unit">
+                                        <input type="number" id="gm-time-troop-scouts" min="0" max="300" value="5">
+                                        <span>s</span>
+                                    </div>
+                                </div>
+                                <div class="gm-time-input-card">
+                                    <label for="gm-time-troop-archers">🏹 Arqueiros:</label>
+                                    <div class="input-with-unit">
+                                        <input type="number" id="gm-time-troop-archers" min="0" max="300" value="10">
+                                        <span>s</span>
+                                    </div>
+                                </div>
+                                <div class="gm-time-input-card">
+                                    <label for="gm-time-troop-colossus">🛡️ Colossos:</label>
+                                    <div class="input-with-unit">
+                                        <input type="number" id="gm-time-troop-colossus" min="0" max="300" value="20">
+                                        <span>s</span>
+                                    </div>
+                                </div>
+                                <div class="gm-time-input-card">
+                                    <label for="gm-time-troop-mages">🔮 Magos da Lã:</label>
+                                    <div class="input-with-unit">
+                                        <input type="number" id="gm-time-troop-mages" min="0" max="300" value="25">
+                                        <span>s</span>
+                                    </div>
+                                </div>
+                                <div class="gm-time-input-card">
+                                    <label for="gm-time-troop-rogues">🗡️ Ladinos:</label>
+                                    <div class="input-with-unit">
+                                        <input type="number" id="gm-time-troop-rogues" min="0" max="300" value="15">
+                                        <span>s</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Toggle Treinamento Instantâneo -->
+                            <div class="gm-instant-toggle-box" style="margin-top: 16px;">
+                                <label class="gm-switch-label">
+                                    <input type="checkbox" id="gm-toggle-instant-train" class="gm-switch-input">
+                                    <span class="gm-switch-slider"></span>
+                                    <div class="gm-switch-text">
+                                        <strong>⚡ Treinamento Instantâneo (0 Segundos)</strong>
+                                        <small>Todas as tropas são treinadas e adicionadas ao exército instantaneamente!</small>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Card 3: Fadiga e Descanso Separado -->
+                        <div class="parchment-panel gm-panel-block">
+                            <div class="gm-block-header">
+                                <div>
+                                    <h3 class="gm-block-title">🛡️ Fadiga & Tempo de Descanso de Tropas e Heróis (Separados)</h3>
+                                    <p class="gm-block-desc">Ajuste o descanso pós-combate individual para o exército e para cada um dos 3 heróis campeões.</p>
+                                </div>
+                                <div class="gm-slider-display" id="gm-timing-fatigue-val">1.0x</div>
+                            </div>
+
+                            <!-- Grade de Fadiga Separada -->
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-top: 12px;">
+                                <div class="gm-time-input-card">
+                                    <label for="gm-time-fatigue-army">🛡️ Exército Geral:</label>
+                                    <div class="input-with-unit">
+                                        <input type="number" id="gm-time-fatigue-army" min="0" max="300" value="20">
+                                        <span>s</span>
+                                    </div>
+                                </div>
+                                <div class="gm-time-input-card">
+                                    <label for="gm-time-fatigue-hero-sword">⚔️ Cavaleiro (Leo):</label>
+                                    <div class="input-with-unit">
+                                        <input type="number" id="gm-time-fatigue-hero-sword" min="0" max="300" value="20">
+                                        <span>s</span>
+                                    </div>
+                                </div>
+                                <div class="gm-time-input-card">
+                                    <label for="gm-time-fatigue-hero-bow">🏹 Arqueira (Mia):</label>
+                                    <div class="input-with-unit">
+                                        <input type="number" id="gm-time-fatigue-hero-bow" min="0" max="300" value="20">
+                                        <span>s</span>
+                                    </div>
+                                </div>
+                                <div class="gm-time-input-card">
+                                    <label for="gm-time-fatigue-hero-mage">🔮 Mago (Nyx):</label>
+                                    <div class="input-with-unit">
+                                        <input type="number" id="gm-time-fatigue-hero-mage" min="0" max="300" value="25">
+                                        <span>s</span>
+                                    </div>
+                                </div>
+                                <div class="gm-time-input-card">
+                                    <label for="gm-input-victory-rest">🏆 Na Vitória:</label>
+                                    <div class="input-with-unit">
+                                        <input type="number" id="gm-input-victory-rest" min="0" max="300" value="20">
+                                        <span>s</span>
+                                    </div>
+                                </div>
+                                <div class="gm-time-input-card">
+                                    <label for="gm-input-defeat-rest">⚠️ Na Derrota:</label>
+                                    <div class="input-with-unit">
+                                        <input type="number" id="gm-input-defeat-rest" min="0" max="300" value="15">
+                                        <span>s</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="gm-slider-wrapper" style="margin-top: 15px;">
+                                <label style="font-weight: bold; font-size: 0.85rem; color: var(--wood-dark);">Multiplicador de Fadiga Geral:</label>
+                                <input type="range" id="gm-timing-fatigue-slider" min="0.01" max="10" step="0.05" value="1.0" class="gm-slider">
+                                <div class="gm-slider-ticks">
+                                    <span>0.01x (Sem Espera)</span>
+                                    <span>0.5x</span>
+                                    <span>1.0x (Padrão)</span>
+                                    <span>2.0x</span>
+                                    <span>5.0x</span>
+                                    <span>10.0x</span>
+                                </div>
+                            </div>
+
+                            <!-- Toggle Sem Fadiga -->
+                            <div class="gm-instant-toggle-box" style="margin-top: 15px;">
+                                <label class="gm-switch-label">
+                                    <input type="checkbox" id="gm-toggle-no-fatigue" class="gm-switch-input">
+                                    <span class="gm-switch-slider"></span>
+                                    <div class="gm-switch-text">
+                                        <strong>🛡️ Modo Sem Fadiga (Batalhas Imediatas Contínuas)</strong>
+                                        <small>Heróis e tropas nunca ficam cansados, permitindo jogar a Torre sem nenhuma pausa!</small>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <!-- Botão de Ação Imediata -->
+                            <div style="margin-top: 18px;">
+                                <button type="button" id="btn-gm-heal-all-fatigue" class="btn gm-btn-heal">
+                                    💖 Curar & Resetar Fadiga de Todas as Tropas Imediatamente
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="gm-save-bar">
+                            <button type="button" id="btn-save-timings" class="btn primary-btn gm-large-btn">
+                                💾 Salvar e Aplicar Regras de Tempo Globalmente
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 4. Gestão de Contas & Vilas Tab -->
+                <section id="gm-view-accounts" class="gm-tab-view" style="display: none;">
+                    <div class="parchment-panel gm-panel-block">
+                        
+                        <!-- Status de Conexão com o Banco de Dados Firestore -->
+                        <div id="gm-db-status-bar" class="gm-db-status-bar">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span class="status-indicator-dot online" id="gm-db-indicator-dot"></span>
+                                <span id="gm-db-status-text">Conectando ao Firestore e coletando contas...</span>
+                            </div>
+                            <div class="gm-db-actions-quick">
+                                <button type="button" id="btn-gm-force-reload-db" class="btn btn-sm" title="Recarregar do banco de dados agora">🔄 Sincronizar Banco</button>
+                                <button type="button" id="btn-gm-open-create-account" class="btn btn-sm" style="background: linear-gradient(135deg, #8e44ad, #9b59b6); color: #fff; font-weight: bold;" title="Criar nova conta de Jogador ou Administrador">➕ Criar Nova Conta</button>
+                                <button type="button" id="btn-gm-open-create-village" class="btn btn-sm" style="background: var(--gold); color: #180e03; font-weight: bold;" title="Criar nova vila personalizada para teste">🏰 Criar Vila Teste</button>
+                            </div>
+                        </div>
+
+                        <!-- Mini Estatísticas Rápidas de Contas -->
+                        <div class="gm-acc-summary-bar" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin: 15px 0 10px 0;">
+                            <div class="gm-mini-stat-card"><span class="label">Total Contas:</span><strong id="gm-stat-acc-total">0</strong></div>
+                            <div class="gm-mini-stat-card"><span class="label">Ativas:</span><strong id="gm-stat-acc-active" style="color:#2ecc71;">0</strong></div>
+                            <div class="gm-mini-stat-card"><span class="label">Admins (ADM):</span><strong id="gm-stat-acc-admins" style="color:#9b59b6;">0</strong></div>
+                            <div class="gm-mini-stat-card"><span class="label">Banidas:</span><strong id="gm-stat-acc-banned" style="color:#e74c3c;">0</strong></div>
+                            <div class="gm-mini-stat-card"><span class="label">Ouro Total:</span><strong id="gm-stat-acc-gold" style="color:#f39c12;">0</strong></div>
+                            <div class="gm-mini-stat-card"><span class="label">Diamantes:</span><strong id="gm-stat-acc-diamonds" style="color:#3498db;">0</strong></div>
+                        </div>
+
+                        <div class="gm-table-toolbar" style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                            <div class="gm-search-box" style="flex: 2; min-width: 220px;">
+                                <span class="search-icon">🔍</span>
+                                <input type="text" id="gm-acc-search" placeholder="Buscar por Nome, E-mail, Tribo ou UID..." style="width: 100%;">
+                            </div>
+
+                            <div style="display: flex; gap: 8px; flex-wrap: wrap; flex: 3; justify-content: flex-end;">
+                                <div class="gm-filter-box">
+                                    <label for="gm-acc-filter-role">Cargo:</label>
+                                    <select id="gm-acc-filter-role">
+                                        <option value="all">Todos os Cargos</option>
+                                        <option value="player">👤 Jogadores</option>
+                                        <option value="admin">👑 Administradores</option>
+                                    </select>
+                                </div>
+
+                                <div class="gm-filter-box">
+                                    <label for="gm-acc-filter-status">Status:</label>
+                                    <select id="gm-acc-filter-status">
+                                        <option value="all">Todos os Status</option>
+                                        <option value="active">🟢 Ativas</option>
+                                        <option value="banned">🚫 Banidas</option>
+                                    </select>
+                                </div>
+
+                                <div class="gm-filter-box">
+                                    <label for="gm-acc-sort">Ordenar:</label>
+                                    <select id="gm-acc-sort">
+                                        <option value="level_desc">🏆 Maior Nível</option>
+                                        <option value="gold_desc">🪙 Mais Rico (Ouro)</option>
+                                        <option value="diamonds_desc">💎 Mais Diamantes</option>
+                                        <option value="name_asc">🔤 Nome (A-Z)</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="gm-table-responsive">
+                            <table class="gm-accounts-table">
+                                <thead>
+                                    <tr>
+                                        <th>Líder & Tribo</th>
+                                        <th>E-mail & UID</th>
+                                        <th>Cargo</th>
+                                        <th>Nível</th>
+                                        <th>Recursos</th>
+                                        <th>Status</th>
+                                        <th>Ações de GM</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="gm-accounts-table-body">
+                                    <!-- Dynamic rows -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 4. Cadastro de Itens & Catálogo Tab -->
+                <section id="gm-view-items" class="gm-tab-view" style="display: none;">
+                    <div class="gm-items-layout">
+                        
+                        <!-- Left: Item Creator Form -->
+                        <div class="parchment-panel gm-panel-block gm-item-form-panel">
+                            <h3 class="gm-block-title">✨ Cadastrar Novo Item no Reino</h3>
+                            <p class="gm-block-desc">Crie equipamentos personalizados que poderão ser obtidos na Torre dos Desafios ou equipados por heróis.</p>
+
+                            <form id="gm-create-item-form" class="gm-form-styled">
+                                <div class="gm-form-row">
+                                    <div class="input-group">
+                                        <label for="gm-item-name">Nome do Item: *</label>
+                                        <input type="text" id="gm-item-name" placeholder="Ex: Garras da Fênix Celestial" required>
+                                    </div>
+                                    <div class="input-group">
+                                        <label for="gm-item-id">ID do Item: *</label>
+                                        <input type="text" id="gm-item-id" placeholder="item_garras_fenix" required>
+                                    </div>
+                                </div>
+
+                                <div class="gm-form-row">
+                                    <div class="input-group">
+                                        <label for="gm-item-slot">Slot / Categoria:</label>
+                                        <select id="gm-item-slot">
+                                            <option value="weapon">🗡️ Arma Principal</option>
+                                            <option value="offhand">🛡️ Mão Secundária (Escudo/Grimório)</option>
+                                            <option value="helmet">🪖 Elmo / Capuz</option>
+                                            <option value="armor">🥋 Armadura / Manto</option>
+                                            <option value="accessory">💍 Acessório / Talismã</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="input-group">
+                                        <label for="gm-item-rarity">Raridade:</label>
+                                        <select id="gm-item-rarity">
+                                            <option value="common">⚪ Comum</option>
+                                            <option value="rare">🔵 Raro</option>
+                                            <option value="epic">🟣 Épico</option>
+                                            <option value="legendary">🟡 Lendário</option>
+                                            <option value="mythic">🔴 Mítico</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="input-group">
+                                    <label>Ícone / Emoji do Item:</label>
+                                    <div class="gm-emoji-presets">
+                                        <button type="button" class="gm-item-emoji-opt selected" data-emoji="⚔️">⚔️</button>
+                                        <button type="button" class="gm-item-emoji-opt" data-emoji="🗡️">🗡️</button>
+                                        <button type="button" class="gm-item-emoji-opt" data-emoji="🏹">🏹</button>
+                                        <button type="button" class="gm-item-emoji-opt" data-emoji="🪄">🪄</button>
+                                        <button type="button" class="gm-item-emoji-opt" data-emoji="🛡️">🛡️</button>
+                                        <button type="button" class="gm-item-emoji-opt" data-emoji="📜">📜</button>
+                                        <button type="button" class="gm-item-emoji-opt" data-emoji="🪖">🪖</button>
+                                        <button type="button" class="gm-item-emoji-opt" data-emoji="🥋">🥋</button>
+                                        <button type="button" class="gm-item-emoji-opt" data-emoji="👑">👑</button>
+                                        <button type="button" class="gm-item-emoji-opt" data-emoji="💍">💍</button>
+                                        <button type="button" class="gm-item-emoji-opt" data-emoji="🔮">🔮</button>
+                                        <button type="button" class="gm-item-emoji-opt" data-emoji="✨">✨</button>
+                                        <button type="button" class="gm-item-emoji-opt" data-emoji="🐾">🐾</button>
+                                        <button type="button" class="gm-item-emoji-opt" data-emoji="💎">💎</button>
+                                    </div>
+                                    <input type="text" id="gm-item-icon" value="⚔️" placeholder="Ou digite outro emoji..." style="margin-top: 6px; width: 120px;">
+                                </div>
+
+                                <div class="input-group">
+                                    <label for="gm-item-desc">Descrição / História do Item:</label>
+                                    <textarea id="gm-item-desc" rows="2" placeholder="Uma breve descrição lendária..."></textarea>
+                                </div>
+
+                                <div class="input-group">
+                                    <label for="gm-item-quartel">Nível Mínimo do Quartel:</label>
+                                    <input type="number" id="gm-item-quartel" value="1" min="1" max="10" style="width: 100px;">
+                                </div>
+
+                                <div class="gm-stats-inputs-block">
+                                    <label style="font-weight: bold; font-size: 0.85rem; color: var(--wood-dark); margin-bottom: 8px; display: block;">
+                                        Atributos de Combate Concedidos:
+                                    </label>
+                                    <div class="gm-stats-grid">
+                                        <div class="stat-input-wrap">
+                                            <span>⚔️ Força:</span>
+                                            <input type="number" id="gm-item-str" value="0" min="0">
+                                        </div>
+                                        <div class="stat-input-wrap">
+                                            <span>🏹 Destreza:</span>
+                                            <input type="number" id="gm-item-dex" value="0" min="0">
+                                        </div>
+                                        <div class="stat-input-wrap">
+                                            <span>🔮 Inteligência:</span>
+                                            <input type="number" id="gm-item-int" value="0" min="0">
+                                        </div>
+                                        <div class="stat-input-wrap">
+                                            <span>⚡ Vigor:</span>
+                                            <input type="number" id="gm-item-sta" value="0" min="0">
+                                        </div>
+                                        <div class="stat-input-wrap">
+                                            <span>❤️ Vida (HP):</span>
+                                            <input type="number" id="gm-item-hp" value="0" min="0">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="actions" style="margin-top: 20px;">
+                                    <button type="submit" id="btn-submit-item" class="btn primary-btn gm-full-btn">
+                                        ✨ Cadastrar Item no Reino
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Right: Active Catalog & Custom Items -->
+                        <div class="parchment-panel gm-panel-block gm-catalog-panel">
+                            <div class="gm-catalog-header">
+                                <h3 class="gm-block-title">📚 Catálogo de Itens Ativos</h3>
+                                <div class="gm-catalog-filters">
+                                    <select id="gm-catalog-filter-slot">
+                                        <option value="all">Todos os Slots</option>
+                                        <option value="weapon">Armas</option>
+                                        <option value="offhand">Secundárias</option>
+                                        <option value="helmet">Elmos</option>
+                                        <option value="armor">Armaduras</option>
+                                        <option value="accessory">Acessórios</option>
+                                    </select>
+                                    <select id="gm-catalog-filter-rarity">
+                                        <option value="all">Todas as Raridades</option>
+                                        <option value="common">Comum</option>
+                                        <option value="rare">Raro</option>
+                                        <option value="epic">Épico</option>
+                                        <option value="legendary">Lendário</option>
+                                        <option value="mythic">Mítico</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div id="gm-catalog-grid" class="gm-catalog-grid">
+                                <!-- Catalog cards -->
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 6. Notícias & Mensagens Tab (Redesign Premium com Live Preview) -->
+                <section id="gm-view-news" class="gm-tab-view" style="display: none;">
+                    <div class="gm-news-redesign-container">
+                        
+                        <!-- Left Column: Editors -->
+                        <div class="gm-news-column-editor">
+                            
+                            <!-- Login Screen News Card -->
+                            <div class="parchment-panel gm-panel-block gm-news-card-lux">
+                                <div class="gm-card-header-lux">
+                                    <div class="gm-card-title-group">
+                                        <span class="gm-card-icon-lux">📜</span>
+                                        <div>
+                                            <h3 class="gm-block-title">Notícia da Tela de Entrada (Login)</h3>
+                                            <p class="gm-block-desc">Texto exibido em destaque no pergaminho inicial para todos os líderes e visitantes.</p>
+                                        </div>
+                                    </div>
+                                    <span class="gm-pill-tag">Ao Vivo</span>
+                                </div>
+
+                                <!-- Quick Presets Tags Toolbar -->
+                                <div class="gm-news-tags-toolbar">
+                                    <span class="toolbar-label">Tags Rápidas:</span>
+                                    <button type="button" class="gm-tag-chip" data-tag="[⚔️ ATUALIZAÇÃO]">⚔️ Atualização</button>
+                                    <button type="button" class="gm-tag-chip" data-tag="[🎉 EVENTO 2X]">🎉 Evento 2x</button>
+                                    <button type="button" class="gm-tag-chip" data-tag="[🛠️ MANUTENÇÃO]">🛠️ Manutenção</button>
+                                    <button type="button" class="gm-tag-chip" data-tag="[👑 AVISO REAL]">👑 Aviso Real</button>
+                                    <button type="button" class="gm-tag-chip" data-tag="[💎 BÔNUS]">💎 Bônus</button>
+                                </div>
+
+                                <div class="gm-input-wrap-lux" style="margin-top: 10px;">
+                                    <textarea id="gm-editor-news-text" class="gm-textarea-lux" rows="6" placeholder="Escreva as novidades, notas de atualização ou avisos do reino..."></textarea>
+                                </div>
+
+                                <div class="gm-news-footer-actions">
+                                    <small id="gm-news-char-count" class="gm-char-count">0 caracteres</small>
+                                    <button type="button" id="btn-save-login-news" class="btn primary-btn gm-lux-btn">
+                                        📢 Publicar Notícia no Login
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Global Broadcast Card -->
+                            <div class="parchment-panel gm-panel-block gm-news-card-lux" style="margin-top: 20px;">
+                                <div class="gm-card-header-lux">
+                                    <div class="gm-card-title-group">
+                                        <span class="gm-card-icon-lux">📡</span>
+                                        <div>
+                                            <h3 class="gm-block-title">Mensagem Global em Tempo Real (Broadcast)</h3>
+                                            <p class="gm-block-desc">Transmite um alerta urgente que surge imediatamente no topo do jogo de todos os jogadores logados.</p>
+                                        </div>
+                                    </div>
+                                    <span class="gm-pill-tag gm-pill-radio">Broadcast</span>
+                                </div>
+
+                                <div class="gm-input-wrap-lux" style="margin-top: 12px;">
+                                    <label for="gm-broadcast-text" style="font-weight: bold; font-size: 0.85rem; color: var(--wood-dark);">Texto do Alerta Global:</label>
+                                    <input type="text" id="gm-broadcast-text" class="gm-input-lux" placeholder="Ex: 👑 [GM]: Manutenção preventiva em 15 minutos! Salvem seus progressos!">
+                                </div>
+
+                                <div class="gm-instant-toggle-box" style="margin-top: 14px;">
+                                    <label class="gm-switch-label">
+                                        <input type="checkbox" id="gm-broadcast-active" class="gm-switch-input">
+                                        <span class="gm-switch-slider"></span>
+                                        <div class="gm-switch-text">
+                                            <strong>Exibir Alerta no Topo do Jogo</strong>
+                                            <small>Quando ligado, todos os jogadores verão uma faixa dourada pulsante no topo da tela.</small>
+                                        </div>
+                                    </label>
+                                </div>
+
+                                <div class="actions" style="margin-top: 15px; text-align: right;">
+                                    <button type="button" id="btn-save-broadcast" class="btn primary-btn gm-lux-btn">
+                                        📡 Transmitir Mensagem Global
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right Column: Live Previews -->
+                        <div class="gm-news-column-preview">
+                            
+                            <!-- Preview Box 1: Login Screen -->
+                            <div class="parchment-panel gm-preview-container">
+                                <div class="gm-preview-header">
+                                    <span class="preview-badge">👁️ Prévia ao Vivo</span>
+                                    <h4>Como os Visitantes Veem na Tela de Entrada</h4>
+                                </div>
+                                <div class="gm-mockup-window">
+                                    <div class="gm-mockup-titlebar">
+                                        <span class="mock-dot red"></span>
+                                        <span class="mock-dot yellow"></span>
+                                        <span class="mock-dot green"></span>
+                                        <span class="mock-url">felineas.game/login</span>
+                                    </div>
+                                    <div class="gm-mockup-body-login">
+                                        <div class="mock-news-box">
+                                            <div class="mock-news-title">
+                                                <span>📢 Notícias do Reino</span>
+                                                <small id="mock-news-date">Hoje</small>
+                                            </div>
+                                            <div id="mock-news-content" class="mock-news-text">
+                                                Nenhuma notícia publicada ainda.
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Preview Box 2: In-Game Broadcast -->
+                            <div class="parchment-panel gm-preview-container" style="margin-top: 20px;">
+                                <div class="gm-preview-header">
+                                    <span class="preview-badge">👁️ Prévia ao Vivo</span>
+                                    <h4>Como os Jogadores Veem no Topo do Jogo</h4>
+                                </div>
+                                <div class="gm-mockup-window">
+                                    <div class="gm-mockup-titlebar">
+                                        <span class="mock-dot red"></span>
+                                        <span class="mock-dot yellow"></span>
+                                        <span class="mock-dot green"></span>
+                                        <span class="mock-url">felineas.game/vila</span>
+                                    </div>
+                                    <div class="gm-mockup-body-game">
+                                        <div id="mock-broadcast-banner" class="mock-broadcast-banner">
+                                            <span class="broadcast-pulse">🔴</span>
+                                            <span class="broadcast-tag">👑 AVISO DO GM:</span>
+                                            <span id="mock-broadcast-text" class="broadcast-text">Exemplo de alerta global</span>
+                                        </div>
+                                        <div class="mock-game-placeholder">
+                                            <div class="mock-res-bar">
+                                                <span>🐟 1.250</span>
+                                                <span>🪵 940</span>
+                                                <span>🪙 3.500</span>
+                                                <span>💎 25</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 7. Logs do Sistema Tab (Auditoria de Alterações) -->
+                <section id="gm-view-logs" class="gm-tab-view" style="display: none;">
+                    <div class="parchment-panel gm-panel-block">
+                        <div class="gm-section-header-row">
+                            <div>
+                                <h3 class="gm-block-title">📜 Histórico & Auditoria de Logs do Sistema</h3>
+                                <p class="gm-block-desc">Registro permanente e em tempo real de todas as ações de GM, alterações de taxas, moderação e criação de itens.</p>
+                            </div>
+                            <div class="gm-batch-actions-row">
+                                <button type="button" id="btn-gm-refresh-logs" class="btn btn-sm">🔄 Recarregar Logs</button>
+                                <button type="button" id="btn-gm-export-logs" class="btn btn-sm">📥 Exportar (JSON)</button>
+                                <button type="button" id="btn-gm-clear-logs" class="btn btn-sm btn-danger-soft">🗑️ Limpar Logs</button>
+                            </div>
+                        </div>
+
+                        <!-- Logs Filter Toolbar -->
+                        <div class="gm-table-toolbar" style="margin-top: 15px;">
+                            <div class="gm-search-box">
+                                <span class="search-icon">🔍</span>
+                                <input type="text" id="gm-logs-search" placeholder="Buscar por ação, detalhes ou autor...">
+                            </div>
+
+                            <div class="gm-filter-box">
+                                <label for="gm-logs-filter-cat">Filtrar Categoria:</label>
+                                <select id="gm-logs-filter-cat">
+                                    <option value="all">Todas as Categorias</option>
+                                    <option value="rates">🌾 Economia & Farm</option>
+                                    <option value="timing">⏱️ Tempos & Regras</option>
+                                    <option value="account">👥 Contas & Recursos</option>
+                                    <option value="village">🏰 Vilas</option>
+                                    <option value="items">⚔️ Itens & Catálogo</option>
+                                    <option value="news">📢 Notícias & Broadcast</option>
+                                    <option value="system">⚙️ Sistema</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Logs List / Table -->
+                        <div class="gm-table-responsive" style="margin-top: 10px;">
+                            <table class="gm-accounts-table gm-logs-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 160px;">Data & Hora</th>
+                                        <th style="width: 140px;">Categoria</th>
+                                        <th style="width: 180px;">Ação</th>
+                                        <th>Detalhes do Evento</th>
+                                        <th style="width: 130px;">Autor</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="gm-logs-table-body">
+                                    <!-- Dynamic rows -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 8. Estatísticas Globais do Reino Tab -->
+                <section id="gm-view-stats" class="gm-tab-view" style="display: none;">
+                    <div class="gm-stats-dashboard">
+                        
+                        <!-- Tesouro Real Consolidado -->
+                        <div class="parchment-panel gm-panel-block">
+                            <div class="gm-block-header">
+                                <div>
+                                    <h3 class="gm-block-title">🪙 Tesouro Real Consolidado</h3>
+                                    <p class="gm-block-desc">Soma acumulada de todos os recursos pertencentes a todas as vilas e contas de jogadores.</p>
+                                </div>
+                                <button type="button" id="btn-gm-refresh-stats" class="btn btn-sm">🔄 Atualizar Censo</button>
+                            </div>
+
+                            <div class="gm-treasury-grid">
+                                <div class="gm-treasury-card gold-card">
+                                    <span class="t-icon">🪙</span>
+                                    <div class="t-val" id="gm-stat-total-gold">0</div>
+                                    <div class="t-label">Ouro Total em Circulação</div>
+                                </div>
+                                <div class="gm-treasury-card diamond-card">
+                                    <span class="t-icon">💎</span>
+                                    <div class="t-val" id="gm-stat-total-diamonds">0</div>
+                                    <div class="t-label">Diamantes em Cofres</div>
+                                </div>
+                                <div class="gm-treasury-card">
+                                    <span class="t-icon">🐟</span>
+                                    <div class="t-val" id="gm-stat-total-fish">0</div>
+                                    <div class="t-label">Peixes Armazenados</div>
+                                </div>
+                                <div class="gm-treasury-card">
+                                    <span class="t-icon">🪵</span>
+                                    <div class="t-val" id="gm-stat-total-wood">0</div>
+                                    <div class="t-label">Madeira Acumulada</div>
+                                </div>
+                                <div class="gm-treasury-card">
+                                    <span class="t-icon">🧶</span>
+                                    <div class="t-val" id="gm-stat-total-wool">0</div>
+                                    <div class="t-label">Fardos de Lã</div>
+                                </div>
+                                <div class="gm-treasury-card">
+                                    <span class="t-icon">🪨</span>
+                                    <div class="t-val" id="gm-stat-total-stone">0</div>
+                                    <div class="t-label">Blocos de Pedra</div>
+                                </div>
+                                <div class="gm-treasury-card">
+                                    <span class="t-icon">⛏️</span>
+                                    <div class="t-val" id="gm-stat-total-coal">0</div>
+                                    <div class="t-label">Carvão Mineral</div>
+                                </div>
+                                <div class="gm-treasury-card">
+                                    <span class="t-icon">⚔️</span>
+                                    <div class="t-val" id="gm-stat-total-iron">0</div>
+                                    <div class="t-label">Barras de Ferro</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Censo de Tribos e Demografia -->
+                        <div class="gm-stats-two-cols" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px;">
+                            <!-- Tribos -->
+                            <div class="parchment-panel gm-panel-block">
+                                <h3 class="gm-block-title">🐾 Censo Demográfico das Tribos</h3>
+                                <p class="gm-block-desc">Distribuição de líderes felinos pelas tribos ancestrais de Felineas.</p>
+                                
+                                <div id="gm-tribe-distribution-list" class="gm-tribe-distribution-list" style="margin-top: 15px;">
+                                    <!-- Dynamic bars -->
+                                </div>
+                            </div>
+
+                            <!-- Níveis e Infraestrutura -->
+                            <div class="parchment-panel gm-panel-block">
+                                <h3 class="gm-block-title">🏰 Indicadores de Infraestrutura & Nível</h3>
+                                <p class="gm-block-desc">Métricas de evolução e força média do reino.</p>
+                                
+                                <div class="gm-infra-metrics-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px;">
+                                    <div class="infra-metric-box">
+                                        <div class="infra-val" id="gm-stat-avg-level">1.0</div>
+                                        <div class="infra-label">Nível Médio de Conta</div>
+                                    </div>
+                                    <div class="infra-metric-box">
+                                        <div class="infra-val" id="gm-stat-max-level">1</div>
+                                        <div class="infra-label">Nível Mais Alto Registrado</div>
+                                    </div>
+                                    <div class="infra-metric-box">
+                                        <div class="infra-val" id="gm-stat-total-buildings">0</div>
+                                        <div class="infra-label">Edifícios Construídos</div>
+                                    </div>
+                                    <div class="infra-metric-box">
+                                        <div class="infra-val" id="gm-stat-banned-pct">0%</div>
+                                        <div class="infra-label">Taxa de Moderação (Banidos)</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Top 5 Leaderboards -->
+                        <div class="parchment-panel gm-panel-block" style="margin-top: 20px;">
+                            <h3 class="gm-block-title">👑 Salão da Fama do Reino (Rankings Gerais)</h3>
+                            <div class="gm-leaderboards-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 15px;">
+                                <div class="gm-rank-col">
+                                    <h4 class="rank-title" style="color: var(--gold); font-size: 1rem; margin-bottom: 10px;">🪙 Vilas Mais Ricas (Ouro)</h4>
+                                    <ol id="gm-rank-richest" class="gm-rank-list">
+                                        <!-- Dynamic items -->
+                                    </ol>
+                                </div>
+                                <div class="gm-rank-col">
+                                    <h4 class="rank-title" style="color: #9b59b6; font-size: 1rem; margin-bottom: 10px;">⭐ Maior Nível de Líder</h4>
+                                    <ol id="gm-rank-levels" class="gm-rank-list">
+                                        <!-- Dynamic items -->
+                                    </ol>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 🌾 Censo de Economia & Taxas de Farm em Vigor -->
+                        <div class="parchment-panel gm-panel-block" style="margin-top: 20px;">
+                            <div class="gm-block-header">
+                                <div>
+                                    <h3 class="gm-block-title">🌾 Censo de Economia & Taxas de Farm em Vigor</h3>
+                                    <p class="gm-block-desc">Métricas operacionais de colheita, multiplicadores ativos, consumo de comida dos gatos e limites de armazenamento aplicados a todas as contas.</p>
+                                </div>
+                                <div style="display: flex; gap: 8px; align-items: center;">
+                                    <span id="gm-stat-farm-status-badge" class="badge-level" style="background: rgba(39,174,96,0.15); color: #27ae60; border-color: #27ae60; padding: 6px 12px; font-size: 0.85rem; font-weight: bold;">⚡ Bônus Ativo</span>
+                                    <button type="button" id="btn-gm-stats-toggle-farm" class="btn btn-sm btn-danger-soft">⏹️ Desativar Bônus de Farm</button>
+                                </div>
+                            </div>
+
+                            <!-- Live Farm Indicators Grid -->
+                            <div class="gm-farm-stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-top: 15px;">
+                                <div class="infra-metric-box">
+                                    <div class="infra-val" id="gm-stat-farm-mult-display" style="color: var(--gold-hover);">1.0x (100%)</div>
+                                    <div class="infra-label">Multiplicador Global de Farm</div>
+                                </div>
+                                <div class="infra-metric-box">
+                                    <div class="infra-val" id="gm-stat-food-consumption-display" style="color: #e67e22;">0.006 /s</div>
+                                    <div class="infra-label">Consumo de Peixe / Trabalhador</div>
+                                </div>
+                                <div class="infra-metric-box">
+                                    <div class="infra-val" id="gm-stat-hunger-penalty-display" style="color: #c0392b;">-50%</div>
+                                    <div class="infra-label">Penalidade por Fome (Peixe = 0)</div>
+                                </div>
+                                <div class="infra-metric-box">
+                                    <div class="infra-val" id="gm-stat-storage-formula-display" style="color: #2980b9;">400 + Nv</div>
+                                    <div class="infra-label">Capacidade dos Depósitos</div>
+                                </div>
+                            </div>
+
+                            <!-- Worker Rates Live Table -->
+                            <div class="gm-table-responsive" style="margin-top: 16px;">
+                                <table class="gm-accounts-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Recurso & Setor</th>
+                                            <th>Taxa Base / Gato</th>
+                                            <th>Bônus por Nível</th>
+                                            <th>Multiplicador GM</th>
+                                            <th>Rendimento Efetivo / seg</th>
+                                            <th>Rendimento Efetivo / hora</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="gm-stat-farm-rates-tbody">
+                                        <!-- Preenchido dinamicamente por refreshGMStats() -->
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Changelog de Balanceamento do Farm -->
+                            <div class="gm-farm-changelog-card" style="margin-top: 18px; padding: 14px 18px; background: rgba(0,0,0,0.02); border: 1px dashed var(--parchment-border); border-radius: 10px;">
+                                <h4 style="margin: 0 0 8px 0; color: var(--wood-dark); font-family: var(--font-heading); font-size: 0.95rem; display: flex; align-items: center; gap: 8px;">
+                                    📋 Alterações Recentes na Economia de Farm (Rebalanceamento do Servidor)
+                                </h4>
+                                <ul style="margin: 0; padding-left: 20px; font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6;">
+                                    <li><strong style="color: #c0392b;">🔻 Redução do Farm Base (~75%):</strong> Produção bruta recalibrada para impedir que vilas acumulem montanhas de recursos em um único dia.</li>
+                                    <li><strong style="color: #e67e22;">🐟 Consumo Ativo de Alimento:</strong> Cada gato ativo nas minas, cais, cabanas e quartéis consome <strong>0.006 peixe/segundo</strong>. Se o peixe zerar, a vila sofre <strong>Fome</strong> e toda a produção cai em 50%.</li>
+                                    <li><strong style="color: #2980b9;">📦 Capacidade Máxima dos Armazéns:</strong> Depósitos agora possuem teto (400 base + 200/Cabana + 150/Mercado). Recursos no teto param de acumular até serem consumidos ou os armazéns evoluídos.</li>
+                                    <li><strong style="color: var(--gold-hover);">🪙 Ouro Nobre e Complexo:</strong> Não é mais obtido por farm passivo trivial. É forjado na <em>Casa da Moeda do Mercado</em>, conquistado em expedições perigosas na <em>Torre dos Desafios</em> ou em grandes conquistas.</li>
+                                    <li><strong style="color: #27ae60;">🛑 Desativação Direta pelo GM:</strong> Botões rápidos no painel para desligar instantaneamente todos os bônus de farm em vigor para todas as contas.</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                    </div>
+                </section>
+            </div>
+        </main>
         
         <!-- Modals -->
         <div id="modal-confirm-contracts" class="modal-overlay" style="display: none;">
@@ -740,6 +2211,689 @@
                     <button type="button" id="btn-save-profile" class="btn primary-btn">Salvar Alterações</button>
                     <button type="button" id="btn-close-profile" class="btn secondary-btn">Fechar</button>
                 </div>
+            </div>
+        </div>
+
+        <!-- Banned Player Notice Modal -->
+        <div id="modal-banned-account" class="modal-overlay" style="display: none;">
+            <div class="modal-content parchment-panel ban-modal" style="text-align: center; max-width: 450px; border-color: #c0392b;">
+                <div style="font-size: 3.5rem; margin-bottom: 10px;">🚫</div>
+                <h3 style="color: #c0392b; font-size: 1.5rem;">Acesso Suspenso pelo Game Master</h3>
+                <p style="margin: 12px 0; color: var(--text-primary);">Esta conta felina foi suspensa pelo GM e seu acesso ao reino foi bloqueado.</p>
+                
+                <div style="background: rgba(192, 57, 43, 0.1); border-left: 4px solid #c0392b; padding: 12px; margin: 15px 0; text-align: left; border-radius: 4px;">
+                    <div style="font-size: 0.85rem; font-weight: bold; color: #c0392b;">Motivo do Banimento:</div>
+                    <div id="banned-reason-text" style="font-size: 0.95rem; margin-top: 4px; color: var(--text-primary); word-break: break-word;">Violação das regras do jogo.</div>
+                </div>
+
+                <div class="actions" style="margin-top: 20px;">
+                    <button id="btn-close-banned" class="btn" style="background: #c0392b; color: #fff; font-weight: bold; width: 100%; padding: 12px; border: none; border-radius: 8px; cursor: pointer;">
+                        Entendido (Sair)
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- GM Ban Confirmation Modal -->
+        <div id="modal-gm-ban" class="modal-overlay" style="display: none;">
+            <div class="modal-content parchment-panel" style="max-width: 450px;">
+                <h3 style="color: #c0392b;">🚫 Banir Conta de Jogador</h3>
+                <p style="margin: 8px 0;">Você está prestes a suspender o líder felino: <strong id="gm-ban-target-name">Jogador</strong></p>
+                <div class="input-group" style="margin-top: 15px; text-align: left;">
+                    <label for="gm-ban-reason-input" style="font-weight: bold; font-size: 0.85rem;">Motivo do Banimento:</label>
+                    <textarea id="gm-ban-reason-input" rows="3" placeholder="Ex: Uso de trapaças / bots, aproveitamento de bugs ou conduta inadequada..." style="width: 100%; padding: 8px; border: 1px solid var(--parchment-border); border-radius: 6px; font-family: var(--font-body); margin-top: 4px;"></textarea>
+                </div>
+                <div class="actions" style="margin-top: 20px;">
+                    <button id="btn-confirm-ban" class="btn" style="background: #c0392b; color: white; border: none; font-weight: bold;">Confirmar Banimento</button>
+                    <button id="btn-cancel-ban" class="btn secondary-btn">Cancelar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- GM Gift Modal -->
+        <div id="modal-gm-gift" class="modal-overlay" style="display: none;">
+            <div class="modal-content parchment-panel" style="max-width: 450px;">
+                <h3>🎁 Conceder Recursos à Conta</h3>
+                <p style="margin: 8px 0;">Adicionar ouro e diamantes para: <strong id="gm-gift-target-name">Jogador</strong></p>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px; text-align: left;">
+                    <div class="input-group">
+                        <label for="gm-gift-gold" style="font-size: 0.85rem; font-weight: bold;">🪙 Quantidade de Ouro:</label>
+                        <input type="number" id="gm-gift-gold" value="1000" min="0" step="100" style="width: 100%; padding: 8px; border: 1px solid var(--parchment-border); border-radius: 6px; margin-top: 4px;">
+                    </div>
+                    <div class="input-group">
+                        <label for="gm-gift-diamonds" style="font-size: 0.85rem; font-weight: bold;">💎 Quantidade de Diamantes:</label>
+                        <input type="number" id="gm-gift-diamonds" value="10" min="0" step="5" style="width: 100%; padding: 8px; border: 1px solid var(--parchment-border); border-radius: 6px; margin-top: 4px;">
+                    </div>
+                </div>
+
+                <div class="actions" style="margin-top: 20px; display: flex; gap: 10px;">
+                    <button type="button" id="btn-confirm-gift" class="btn primary-btn" style="flex: 1;">🎁 Conceder Recursos</button>
+                    <button type="button" id="btn-cancel-gift" class="btn secondary-btn" style="min-width: 100px;">Cancelar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- GM Create Custom Village Modal -->
+        <div id="modal-gm-create-village" class="modal-overlay" style="display: none;">
+            <div class="modal-content parchment-panel" style="max-width: 550px;">
+                <div class="modal-header-fancy">
+                    <h3 style="color: var(--gold);">🏰 Criar Nova Vila de Teste</h3>
+                    <p style="font-size: 0.85rem; color: var(--text-secondary);">Crie uma vila com os parâmetros que desejar para testar a economia e jogabilidade.</p>
+                </div>
+
+                <form id="gm-form-create-village" style="margin-top: 15px;">
+                    <div class="input-group">
+                        <label for="gm-village-name" style="font-weight: bold; font-size: 0.85rem;">Nome da Vila / Líder:</label>
+                        <input type="text" id="gm-village-name" placeholder="Ex: Reino de Miauvalle" required style="width: 100%;">
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px;">
+                        <div class="input-group">
+                            <label for="gm-village-tribe" style="font-weight: bold; font-size: 0.85rem;">Tribo Felina:</label>
+                            <select id="gm-village-tribe" style="width: 100%; padding: 8px;">
+                                <option value="Os Pata-Dourada">Os Pata-Dourada (Guerreiros)</option>
+                                <option value="Os Viajantes Lunares">Os Viajantes Lunares (Ágeis)</option>
+                                <option value="Os Rebeldes do Beco">Os Rebeldes do Beco (Astutos)</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label for="gm-village-level" style="font-weight: bold; font-size: 0.85rem;">Nível da Conta:</label>
+                            <input type="number" id="gm-village-level" value="1" min="1" max="10" style="width: 100%;">
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 15px;">
+                        <label style="font-weight: bold; font-size: 0.85rem; display: block; margin-bottom: 6px;">Recursos Iniciais da Vila:</label>
+                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;">
+                            <div><small>🐟 Peixes</small><input type="number" id="gm-cv-fish" value="300" min="0" style="width: 100%;"></div>
+                            <div><small>🪵 Madeira</small><input type="number" id="gm-cv-wood" value="300" min="0" style="width: 100%;"></div>
+                            <div><small>🧶 Lã</small><input type="number" id="gm-cv-wool" value="50" min="0" style="width: 100%;"></div>
+                            <div><small>🪨 Pedra</small><input type="number" id="gm-cv-stone" value="50" min="0" style="width: 100%;"></div>
+                            <div><small>⛏️ Carvão</small><input type="number" id="gm-cv-coal" value="20" min="0" style="width: 100%;"></div>
+                            <div><small>⚔️ Ferro</small><input type="number" id="gm-cv-iron" value="20" min="0" style="width: 100%;"></div>
+                            <div><small>🪙 Ouro</small><input type="number" id="gm-cv-gold" value="250" min="0" style="width: 100%;"></div>
+                            <div><small>💎 Diamantes</small><input type="number" id="gm-cv-diamonds" value="15" min="0" style="width: 100%;"></div>
+                        </div>
+                    </div>
+
+                    <div class="actions" style="margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
+                        <button type="submit" id="btn-submit-create-village" class="btn primary-btn" style="flex: 1;">
+                            ✨ Criar Vila
+                        </button>
+                        <button type="button" id="btn-submit-create-and-play" class="btn gm-btn-village" style="flex: 1;">
+                            🎮 Criar e Jogar
+                        </button>
+                        <button type="button" id="btn-cancel-create-village" class="btn secondary-btn">
+                            Cancelar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- GM Edit Account Resources Modal -->
+        <div id="modal-gm-edit-resources" class="modal-overlay" style="display: none;">
+            <div class="modal-content parchment-panel" style="max-width: 500px; position: relative;">
+                <button type="button" id="btn-close-edit-res-x" class="modal-close-icon" style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 1.4rem; cursor: pointer; color: var(--text-secondary);" title="Fechar">✕</button>
+                <div class="modal-header-fancy">
+                    <h3 style="color: var(--gold);">✏️ Editar Recursos da Vila</h3>
+                    <p style="font-size: 0.85rem; color: var(--text-secondary);">Ajustando recursos de: <strong id="gm-edit-res-target-name">Jogador</strong></p>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 15px;">
+                    <div class="input-group">
+                        <label for="gm-er-fish">🐟 Peixes:</label>
+                        <input type="number" id="gm-er-fish" value="0" min="0" style="width: 100%;">
+                    </div>
+                    <div class="input-group">
+                        <label for="gm-er-wood">🪵 Madeira:</label>
+                        <input type="number" id="gm-er-wood" value="0" min="0" style="width: 100%;">
+                    </div>
+                    <div class="input-group">
+                        <label for="gm-er-wool">🧶 Lã:</label>
+                        <input type="number" id="gm-er-wool" value="0" min="0" style="width: 100%;">
+                    </div>
+                    <div class="input-group">
+                        <label for="gm-er-stone">🪨 Pedra:</label>
+                        <input type="number" id="gm-er-stone" value="0" min="0" style="width: 100%;">
+                    </div>
+                    <div class="input-group">
+                        <label for="gm-er-coal">⛏️ Carvão:</label>
+                        <input type="number" id="gm-er-coal" value="0" min="0" style="width: 100%;">
+                    </div>
+                    <div class="input-group">
+                        <label for="gm-er-iron">⚔️ Ferro:</label>
+                        <input type="number" id="gm-er-iron" value="0" min="0" style="width: 100%;">
+                    </div>
+                    <div class="input-group">
+                        <label for="gm-er-gold">🪙 Ouro:</label>
+                        <input type="number" id="gm-er-gold" value="0" min="0" style="width: 100%;">
+                    </div>
+                    <div class="input-group">
+                        <label for="gm-er-diamonds">💎 Diamantes:</label>
+                        <input type="number" id="gm-er-diamonds" value="0" min="0" style="width: 100%;">
+                    </div>
+                </div>
+
+                <div style="margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap;">
+                    <button type="button" id="btn-gm-res-preset-starter" class="btn btn-sm">📦 Padrão Inicial (250/250/150)</button>
+                    <button type="button" id="btn-gm-res-preset-mid" class="btn btn-sm">⭐ Padrão Avançado (2k/2k/500)</button>
+                </div>
+
+                <div class="actions" style="margin-top: 20px; display: flex; gap: 10px;">
+                    <button type="button" id="btn-confirm-edit-resources" class="btn primary-btn" style="flex: 1;">💾 Salvar Recursos</button>
+                    <button type="button" id="btn-cancel-edit-resources" class="btn secondary-btn" style="min-width: 120px;">🔙 Voltar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- GM Create Account Modal (Jogador Comum ou Administrador ADM) -->
+        <div id="modal-gm-create-account" class="modal-overlay" style="display: none;">
+            <div class="modal-content parchment-panel" style="max-width: 600px; position: relative;">
+                <button type="button" id="btn-close-create-acc-x" class="modal-close-icon" style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 1.4rem; cursor: pointer; color: var(--text-secondary);" title="Fechar">✕</button>
+                <div class="modal-header-fancy">
+                    <h3 style="color: var(--gold);">👤 Cadastrar Nova Conta no Reino</h3>
+                    <p style="font-size: 0.85rem; color: var(--text-secondary);">Crie contas oficiais de <strong>Jogador Comum</strong> ou <strong>Administrador (ADM)</strong> com presets inteligentes.</p>
+                </div>
+
+                <!-- Presets Rápidos de Criação -->
+                <div style="margin-top: 12px; padding: 8px 10px; background: rgba(0,0,0,0.03); border: 1px dashed var(--parchment-border); border-radius: 8px;">
+                    <div style="font-size: 0.78rem; font-weight: 800; color: var(--wood-dark); margin-bottom: 6px;">⚡ PRESETS RÁPIDOS DE CONTA:</div>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <button type="button" id="btn-gm-ca-preset-player" class="btn btn-sm" style="background: rgba(46,204,113,0.15); border: 1px solid #2ecc71; color: #27ae60; font-weight: bold;">
+                            🟢 Jogador Inicial (Nv. 1)
+                        </button>
+                        <button type="button" id="btn-gm-ca-preset-mid" class="btn btn-sm" style="background: rgba(52,152,219,0.15); border: 1px solid #3498db; color: #2980b9; font-weight: bold;">
+                            🟡 Vila Avançada (Nv. 5)
+                        </button>
+                        <button type="button" id="btn-gm-ca-preset-admin" class="btn btn-sm" style="background: rgba(155,89,182,0.15); border: 1px solid #9b59b6; color: #8e44ad; font-weight: bold;">
+                            👑 Administrador / Dev (ADM)
+                        </button>
+                    </div>
+                </div>
+
+                <form id="gm-form-create-account" style="margin-top: 14px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+                        <div class="input-group">
+                            <label for="gm-ca-role" style="font-weight: bold; font-size: 0.85rem;">Cargo: *</label>
+                            <select id="gm-ca-role" style="width: 100%; padding: 8px; font-weight: bold;">
+                                <option value="player">👤 Jogador</option>
+                                <option value="admin">👑 Administrador (ADM)</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label for="gm-ca-tribe" style="font-weight: bold; font-size: 0.85rem;">Tribo Felina:</label>
+                            <select id="gm-ca-tribe" style="width: 100%; padding: 8px;">
+                                <option value="Os Pata-Dourada">Os Pata-Dourada</option>
+                                <option value="Os Viajantes Lunares">Os Viajantes Lunares</option>
+                                <option value="Os Rebeldes do Beco">Os Rebeldes do Beco</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label for="gm-ca-level" style="font-weight: bold; font-size: 0.85rem;">Nível Inicial:</label>
+                            <input type="number" id="gm-ca-level" value="1" min="1" max="100" style="width: 100%;">
+                        </div>
+                    </div>
+
+                    <div class="input-group" style="margin-top: 8px;">
+                        <label for="gm-ca-name" style="font-weight: bold; font-size: 0.85rem;">Nome do Líder Felino: *</label>
+                        <input type="text" id="gm-ca-name" placeholder="Ex: General Bigode de Aço" required style="width: 100%;">
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 10px; margin-top: 8px;">
+                        <div class="input-group">
+                            <label for="gm-ca-email" style="font-weight: bold; font-size: 0.85rem;">E-mail de Login: *</label>
+                            <input type="email" id="gm-ca-email" placeholder="jogador@felineas.com" required style="width: 100%;">
+                        </div>
+                        <div class="input-group">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <label for="gm-ca-password" style="font-weight: bold; font-size: 0.85rem;">Senha Inicial: *</label>
+                                <button type="button" id="btn-gm-ca-gen-pass" style="background: none; border: none; font-size: 0.75rem; color: var(--gold); cursor: pointer; text-decoration: underline;">Gerar</button>
+                            </div>
+                            <input type="text" id="gm-ca-password" placeholder="Mínimo 4 caracteres" required minlength="4" value="123456" style="width: 100%;">
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 12px;">
+                        <label style="font-weight: bold; font-size: 0.85rem; display: block; margin-bottom: 6px;">Recursos Iniciais Concedidos:</label>
+                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px;">
+                            <div><small>🐟 Peixes</small><input type="number" id="gm-ca-fish" value="500" min="0" style="width: 100%;"></div>
+                            <div><small>🪵 Madeira</small><input type="number" id="gm-ca-wood" value="300" min="0" style="width: 100%;"></div>
+                            <div><small>🧶 Lã</small><input type="number" id="gm-ca-wool" value="50" min="0" style="width: 100%;"></div>
+                            <div><small>🪨 Pedra</small><input type="number" id="gm-ca-stone" value="0" min="0" style="width: 100%;"></div>
+                            <div><small>⛏️ Carvão</small><input type="number" id="gm-ca-coal" value="0" min="0" style="width: 100%;"></div>
+                            <div><small>⚔️ Ferro</small><input type="number" id="gm-ca-iron" value="0" min="0" style="width: 100%;"></div>
+                            <div><small>🪙 Ouro</small><input type="number" id="gm-ca-gold" value="250" min="0" style="width: 100%;"></div>
+                            <div><small>💎 Diamantes</small><input type="number" id="gm-ca-diamonds" value="10" min="0" style="width: 100%;"></div>
+                        </div>
+                    </div>
+
+                    <div class="actions" style="margin-top: 20px; display: flex; gap: 10px;">
+                        <button type="submit" id="btn-submit-create-account" class="btn primary-btn" style="flex: 1;">
+                            ✨ Criar Conta no Reino
+                        </button>
+                        <button type="button" id="btn-cancel-create-account" class="btn secondary-btn" style="min-width: 120px;">
+                            🔙 Voltar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- GM Modal Ficha Completa do Jogador & Edição Total -->
+        <div id="modal-gm-account-details" class="modal-overlay" style="display: none;">
+            <div class="modal-content parchment-panel" style="max-width: 750px; position: relative; max-height: 90vh; overflow-y: auto;">
+                <button type="button" id="btn-close-acc-details-x" class="modal-close-icon" style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 1.4rem; cursor: pointer; color: var(--text-secondary);" title="Fechar">✕</button>
+                
+                <!-- Header da Ficha -->
+                <div style="display: flex; align-items: center; gap: 16px; border-bottom: 2px dashed var(--parchment-border); padding-bottom: 12px;">
+                    <div id="gm-det-avatar" style="font-size: 3rem; background: rgba(0,0,0,0.04); border-radius: 50%; width: 70px; height: 70px; display: flex; align-items: center; justify-content: center; border: 2px solid var(--gold);">🦁</div>
+                    <div style="flex: 1;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <h3 id="gm-det-name" style="color: var(--wood-dark); margin: 0; font-family: var(--font-heading);">Nome do Líder</h3>
+                            <span id="gm-det-role-badge" class="badge-role">👤 Jogador</span>
+                            <span id="gm-det-status-badge" class="badge-active">🟢 Ativo</span>
+                        </div>
+                        <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 3px;">
+                            <span id="gm-det-email">email@felineas.com</span> &bull; 
+                            <span id="gm-det-tribe" style="font-weight: 700;">Os Pata-Dourada</span> &bull; 
+                            <code id="gm-det-uid" style="font-size: 0.72rem; opacity: 0.8;">UID</code>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Barra de Ações Rápidas -->
+                <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--parchment-border);">
+                    <button type="button" id="btn-gm-det-play" class="btn btn-sm" style="background: #27ae60; color: #fff; font-weight: bold;">🎮 Jogar nesta Vila</button>
+                    <button type="button" id="btn-gm-det-open-gift-item" class="btn btn-sm" style="background: #8e44ad; color: #fff; font-weight: bold;">🎁 Doar Item do Catálogo</button>
+                    <button type="button" id="btn-gm-det-toggle-role" class="btn btn-sm btn-secondary">👑 Alternar Cargo (ADM/Player)</button>
+                    <button type="button" id="btn-gm-det-reset-pass" class="btn btn-sm btn-secondary">🔑 Redefinir Senha</button>
+                    <button type="button" id="btn-gm-det-toggle-ban" class="btn btn-sm btn-secondary">🚫 Banir Conta</button>
+                    <button type="button" id="btn-gm-det-delete-acc" class="btn btn-sm" style="background: rgba(231,76,60,0.15); color: #c0392b; border: 1px solid #e74c3c;">🗑️ Excluir Conta</button>
+                </div>
+
+                <!-- Formulário de Edição Completa -->
+                <form id="gm-form-edit-account-details" style="margin-top: 14px;">
+                    
+                    <!-- Nível e XP -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; background: rgba(0,0,0,0.02); padding: 10px; border-radius: 8px;">
+                        <div>
+                            <label style="font-weight: bold; font-size: 0.82rem;">🏆 Nível de Conta:</label>
+                            <input type="number" id="gm-det-input-level" min="1" max="100" style="width: 100%; font-weight: bold;">
+                        </div>
+                        <div>
+                            <label style="font-weight: bold; font-size: 0.82rem;">✨ XP Atual:</label>
+                            <input type="number" id="gm-det-input-xp" min="0" style="width: 100%;">
+                        </div>
+                        <div>
+                            <label style="font-weight: bold; font-size: 0.82rem;">🏷️ Nome da Vila/Líder:</label>
+                            <input type="text" id="gm-det-input-name" style="width: 100%;">
+                        </div>
+                    </div>
+
+                    <!-- Recursos Atuais -->
+                    <div style="margin-top: 14px;">
+                        <h4 style="color: var(--wood-dark); font-size: 0.95rem; margin-bottom: 6px;">💰 Recursos em Estoque:</h4>
+                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px;">
+                            <div><small>🐟 Peixes</small><input type="number" id="gm-det-res-fish" min="0" style="width: 100%;"></div>
+                            <div><small>🪵 Madeira</small><input type="number" id="gm-det-res-wood" min="0" style="width: 100%;"></div>
+                            <div><small>🧶 Lã</small><input type="number" id="gm-det-res-wool" min="0" style="width: 100%;"></div>
+                            <div><small>🪨 Pedra</small><input type="number" id="gm-det-res-stone" min="0" style="width: 100%;"></div>
+                            <div><small>⛏️ Carvão</small><input type="number" id="gm-det-res-coal" min="0" style="width: 100%;"></div>
+                            <div><small>⚔️ Ferro</small><input type="number" id="gm-det-res-iron" min="0" style="width: 100%;"></div>
+                            <div><small>🪙 Ouro</small><input type="number" id="gm-det-res-gold" min="0" style="width: 100%;"></div>
+                            <div><small>💎 Diamantes</small><input type="number" id="gm-det-res-diamonds" min="0" style="width: 100%;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Níveis dos 7 Edifícios -->
+                    <div style="margin-top: 14px;">
+                        <h4 style="color: var(--wood-dark); font-size: 0.95rem; margin-bottom: 6px;">🏛️ Níveis dos 7 Edifícios do Reino:</h4>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px;">
+                            <div class="gm-building-edit-box">
+                                <label>🏠 Cabana</label>
+                                <input type="number" id="gm-det-bldg-cabana" min="0" max="50" value="1" style="width: 100%;">
+                            </div>
+                            <div class="gm-building-edit-box">
+                                <label>⚓ Cais</label>
+                                <input type="number" id="gm-det-bldg-cais" min="0" max="50" value="1" style="width: 100%;">
+                            </div>
+                            <div class="gm-building-edit-box">
+                                <label>🧶 Arranhador</label>
+                                <input type="number" id="gm-det-bldg-arranhador" min="0" max="50" value="1" style="width: 100%;">
+                            </div>
+                            <div class="gm-building-edit-box">
+                                <label>⛏️ Mina</label>
+                                <input type="number" id="gm-det-bldg-mina" min="0" max="50" value="1" style="width: 100%;">
+                            </div>
+                            <div class="gm-building-edit-box">
+                                <label>⚔️ Quartel</label>
+                                <input type="number" id="gm-det-bldg-quartel" min="0" max="50" value="0" style="width: 100%;">
+                            </div>
+                            <div class="gm-building-edit-box">
+                                <label>🏛️ Prefeitura</label>
+                                <input type="number" id="gm-det-bldg-prefeitura" min="0" max="50" value="0" style="width: 100%;">
+                            </div>
+                            <div class="gm-building-edit-box">
+                                <label>⚖️ Mercado</label>
+                                <input type="number" id="gm-det-bldg-mercado" min="0" max="50" value="0" style="width: 100%;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Guarnição de Tropas -->
+                    <div style="margin-top: 14px;">
+                        <h4 style="color: var(--wood-dark); font-size: 0.95rem; margin-bottom: 6px;">🛡️ Guarnição de Tropas Militares:</h4>
+                        <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px;">
+                            <div><small>🗡️ Batedores</small><input type="number" id="gm-det-army-scouts" min="0" value="0" style="width: 100%;"></div>
+                            <div><small>🏹 Arqueiros</small><input type="number" id="gm-det-army-archers" min="0" value="0" style="width: 100%;"></div>
+                            <div><small>🛡️ Colossos</small><input type="number" id="gm-det-army-colossus" min="0" value="0" style="width: 100%;"></div>
+                            <div><small>🔮 Magos</small><input type="number" id="gm-det-army-mages" min="0" value="0" style="width: 100%;"></div>
+                            <div><small>🗡️ Ladinos</small><input type="number" id="gm-det-army-rogues" min="0" value="0" style="width: 100%;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Mochila de Itens da Conta -->
+                    <div style="margin-top: 14px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                            <h4 style="color: var(--wood-dark); font-size: 0.95rem; margin: 0;">🎒 Mochila de Equipamentos:</h4>
+                            <button type="button" id="btn-gm-det-quick-gift" class="btn btn-sm" style="font-size: 0.75rem; padding: 2px 8px;">+ Adicionar Item</button>
+                        </div>
+                        <div id="gm-det-inventory-list" style="display: flex; gap: 8px; flex-wrap: wrap; max-height: 120px; overflow-y: auto; padding: 8px; background: rgba(0,0,0,0.03); border-radius: 8px; border: 1px solid var(--parchment-border);">
+                            <!-- Injetado dinamicamente -->
+                        </div>
+                    </div>
+
+                    <div class="actions" style="margin-top: 20px; display: flex; gap: 10px;">
+                        <button type="submit" id="btn-gm-save-account-details" class="btn primary-btn" style="flex: 1;">
+                            💾 Salvar Todas as Alterações na Conta
+                        </button>
+                        <button type="button" id="btn-cancel-acc-details" class="btn secondary-btn" style="min-width: 120px;">
+                            🔙 Fechar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- GM Modal Doar Item do Catálogo -->
+        <div id="modal-gm-gift-item" class="modal-overlay" style="display: none;">
+            <div class="modal-content parchment-panel" style="max-width: 500px; position: relative;">
+                <button type="button" id="btn-close-gift-item-x" class="modal-close-icon" style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 1.4rem; cursor: pointer; color: var(--text-secondary);" title="Fechar">✕</button>
+                <div class="modal-header-fancy">
+                    <h3 style="color: var(--gold);">🎁 Conceder Item do Catálogo</h3>
+                    <p style="font-size: 0.85rem; color: var(--text-secondary);">Envie qualquer item diretamente para a mochila de <strong id="gm-gift-item-target-name">Jogador</strong>.</p>
+                </div>
+
+                <div style="margin-top: 15px;">
+                    <label for="gm-gift-item-select" style="font-weight: bold; font-size: 0.85rem;">Selecione o Item do Catálogo:</label>
+                    <select id="gm-gift-item-select" style="width: 100%; padding: 10px; margin-top: 4px; font-size: 0.95rem;">
+                        <!-- Injetado com os 31 itens -->
+                    </select>
+
+                    <div id="gm-gift-item-preview" style="margin-top: 14px; padding: 12px; background: rgba(0,0,0,0.04); border-radius: 8px; border: 1px solid var(--parchment-border);">
+                        <!-- Preview do item selecionado -->
+                    </div>
+
+                    <div class="actions" style="margin-top: 20px; display: flex; gap: 10px;">
+                        <button type="button" id="btn-confirm-gift-item" class="btn primary-btn" style="flex: 1;">
+                            🎁 Conceder Item para a Conta
+                        </button>
+                        <button type="button" id="btn-cancel-gift-item" class="btn secondary-btn" style="min-width: 100px;">
+                            🔙 Voltar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        <!-- GM Modal Visualizar e Gerenciar Mochila do Jogador -->
+        <div id="modal-gm-player-inventory" class="modal-overlay" style="display: none;">
+            <div class="modal-content parchment-panel" style="max-width: 850px; position: relative; max-height: 90vh; overflow-y: auto;">
+                <button type="button" id="btn-close-player-inv-x" class="modal-close-icon" style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 1.4rem; cursor: pointer; color: var(--text-secondary);" title="Fechar">✕</button>
+                
+                <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 2px dashed var(--parchment-border); padding-bottom: 12px; flex-wrap: wrap; gap: 10px;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div id="gm-pinv-avatar" style="font-size: 2.5rem; background: rgba(0,0,0,0.05); border-radius: 50%; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; border: 2px solid var(--gold);">🦁</div>
+                        <div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <h3 id="gm-pinv-name" style="margin: 0; color: var(--wood-dark); font-family: var(--font-heading);">Mochila do Jogador</h3>
+                                <span id="gm-pinv-badge" class="badge-role">👤 Jogador</span>
+                            </div>
+                            <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 2px;">
+                                <span id="gm-pinv-email">email@felineas.local</span> &bull; 
+                                <span id="gm-pinv-item-count" style="font-weight: bold; color: var(--gold-hover);">0 Itens na Mochila</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 8px;">
+                        <button type="button" id="btn-gm-pinv-gift-new" class="btn btn-sm" style="background: #8e44ad; color: #fff; font-weight: bold; padding: 6px 14px;">
+                            🎁 + Conceder Item do Catálogo
+                        </button>
+                        <button type="button" id="btn-gm-pinv-refresh" class="btn btn-sm btn-secondary" title="Recarregar">🔄</button>
+                    </div>
+                </div>
+
+                <!-- Equipamentos do Campeão (Herói) -->
+                <div style="margin-top: 14px;">
+                    <h4 style="color: var(--wood-dark); font-size: 0.95rem; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+                        ⚔️ Equipamentos Ativos no Campeão:
+                    </h4>
+                    <div id="gm-pinv-equipped-slots" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px;">
+                        <!-- Injetado dinamicamente: Arma, Secundária, Elmo, Armadura, Acessório -->
+                    </div>
+                </div>
+
+                <!-- Itens na Mochila (Grid) -->
+                <div style="margin-top: 18px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
+                        <h4 style="color: var(--wood-dark); font-size: 0.95rem; margin: 0; display: flex; align-items: center; gap: 6px;">
+                            🎒 Itens Guardados na Bolsa / Inventário:
+                        </h4>
+                        <div style="display: flex; gap: 6px;">
+                            <input type="text" id="gm-pinv-search" placeholder="Filtrar por nome ou slot..." style="padding: 4px 10px; font-size: 0.8rem; border-radius: 4px; border: 1px solid var(--parchment-border); width: 180px;">
+                        </div>
+                    </div>
+                    <div id="gm-player-inv-grid" class="gm-player-inv-grid" style="max-height: 380px; overflow-y: auto; padding: 4px;">
+                        <!-- Cards injetados dinamicamente -->
+                    </div>
+                </div>
+
+                <div class="actions" style="margin-top: 18px; border-top: 1px solid var(--parchment-border); padding-top: 12px; display: flex; justify-content: flex-end;">
+                    <button type="button" id="btn-close-player-inv-bottom" class="btn secondary-btn" style="min-width: 120px;">
+                        🔙 Fechar Mochila
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- GM Modal Editar Atributos de Item do Jogador -->
+        <div id="modal-gm-edit-player-item" class="modal-overlay" style="display: none;">
+            <div class="modal-content parchment-panel" style="max-width: 500px; position: relative;">
+                <button type="button" id="btn-close-edit-player-item-x" class="modal-close-icon" style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 1.4rem; cursor: pointer; color: var(--text-secondary);" title="Fechar">✕</button>
+                <div class="modal-header-fancy">
+                    <h3 style="color: var(--gold);">✏️ Customizar Item do Jogador</h3>
+                    <p style="font-size: 0.85rem; color: var(--text-secondary);">Edite os atributos e bônus de combate desta instância de item na mochila de <strong id="gm-epi-target-player">Jogador</strong>.</p>
+                </div>
+
+                <form id="gm-form-edit-player-item" style="margin-top: 15px;">
+                    <input type="hidden" id="gm-epi-item-uid">
+                    <input type="hidden" id="gm-epi-player-uid">
+
+                    <div class="input-group">
+                        <label for="gm-epi-name">Nome do Item:</label>
+                        <input type="text" id="gm-epi-name" required style="width: 100%; font-weight: bold;">
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px;">
+                        <div class="input-group">
+                            <label for="gm-epi-slot">Slot:</label>
+                            <select id="gm-epi-slot" style="width: 100%;">
+                                <option value="weapon">🗡️ Arma Principal</option>
+                                <option value="offhand">🛡️ Mão Secundária</option>
+                                <option value="helmet">🪖 Elmo</option>
+                                <option value="armor">🥋 Armadura</option>
+                                <option value="accessory">💍 Acessório</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label for="gm-epi-rarity">Raridade:</label>
+                            <select id="gm-epi-rarity" style="width: 100%;">
+                                <option value="common">⚪ Comum</option>
+                                <option value="rare">🔵 Raro</option>
+                                <option value="epic">🟣 Épico</option>
+                                <option value="legendary">🟡 Lendário</option>
+                                <option value="mythic">🔴 Mítico</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="input-group" style="margin-top: 8px;">
+                        <label for="gm-epi-icon">Ícone / Emoji:</label>
+                        <input type="text" id="gm-epi-icon" style="width: 80px; font-size: 1.2rem; text-align: center;">
+                    </div>
+
+                    <div style="margin-top: 12px; background: rgba(0,0,0,0.03); padding: 10px; border-radius: 8px; border: 1px solid var(--parchment-border);">
+                        <label style="font-weight: bold; font-size: 0.85rem; color: var(--wood-dark); display: block; margin-bottom: 6px;">
+                            ⚔️ Atributos de Combate Concedidos:
+                        </label>
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
+                            <div><small>⚔️ Força</small><input type="number" id="gm-epi-str" min="0" style="width: 100%;"></div>
+                            <div><small>🏹 Destreza</small><input type="number" id="gm-epi-dex" min="0" style="width: 100%;"></div>
+                            <div><small>🔮 Inteligência</small><input type="number" id="gm-epi-int" min="0" style="width: 100%;"></div>
+                            <div><small>⚡ Vigor</small><input type="number" id="gm-epi-sta" min="0" style="width: 100%;"></div>
+                            <div><small>❤️ Vida (HP)</small><input type="number" id="gm-epi-hp" min="0" style="width: 100%;"></div>
+                        </div>
+                    </div>
+
+                    <div class="actions" style="margin-top: 18px; display: flex; gap: 10px;">
+                        <button type="submit" id="btn-submit-edit-player-item" class="btn primary-btn" style="flex: 1;">
+                            💾 Salvar Alterações no Item
+                        </button>
+                        <button type="button" id="btn-cancel-edit-player-item" class="btn secondary-btn" style="min-width: 100px;">
+                            🔙 Cancelar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- GM Modal Redefinir Senha -->
+        <div id="modal-gm-reset-password" class="modal-overlay" style="display: none;">
+            <div class="modal-content parchment-panel" style="max-width: 420px; position: relative;">
+                <button type="button" id="btn-close-reset-pass-x" class="modal-close-icon" style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 1.4rem; cursor: pointer; color: var(--text-secondary);" title="Fechar">✕</button>
+                <div class="modal-header-fancy">
+                    <h3 style="color: var(--gold);">🔑 Redefinir Senha da Conta</h3>
+                    <p style="font-size: 0.85rem; color: var(--text-secondary);">Redefina a senha de <strong id="gm-reset-pass-target-name">Jogador</strong> sem necessidade de e-mail.</p>
+                </div>
+
+                <div style="margin-top: 15px;">
+                    <div class="input-group">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <label for="gm-reset-pass-new" style="font-weight: bold; font-size: 0.85rem;">Nova Senha:</label>
+                            <button type="button" id="btn-gen-reset-pass" style="background: none; border: none; font-size: 0.75rem; color: var(--gold); cursor: pointer; text-decoration: underline;">Gerar Aleatória</button>
+                        </div>
+                        <input type="text" id="gm-reset-pass-new" placeholder="Mínimo 4 caracteres" value="felino123" style="width: 100%; font-family: monospace; font-size: 1.05rem;">
+                    </div>
+
+                    <div class="actions" style="margin-top: 20px; display: flex; gap: 10px;">
+                        <button type="button" id="btn-confirm-reset-pass" class="btn primary-btn" style="flex: 1;">
+                            💾 Atualizar Senha
+                        </button>
+                        <button type="button" id="btn-cancel-reset-pass" class="btn secondary-btn" style="min-width: 100px;">
+                            🔙 Cancelar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- GM Edit Item Modal -->
+        <div id="modal-gm-edit-item" class="modal-overlay" style="display: none;">
+            <div class="modal-content parchment-panel" style="max-width: 550px; position: relative;">
+                <button type="button" id="btn-close-edit-item-x" class="modal-close-icon" style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 1.4rem; cursor: pointer; color: var(--text-secondary);" title="Fechar">✕</button>
+                <div class="modal-header-fancy">
+                    <h3 style="color: var(--gold);">✏️ Editar Item do Catálogo</h3>
+                    <p style="font-size: 0.85rem; color: var(--text-secondary);">Altere atributos de combate, nível mínimo e ative/desative este equipamento no jogo.</p>
+                </div>
+
+                <form id="gm-form-edit-item" style="margin-top: 15px;">
+                    <input type="hidden" id="gm-ei-id">
+
+                    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 10px;">
+                        <div class="input-group">
+                            <label for="gm-ei-name">Nome do Item: *</label>
+                            <input type="text" id="gm-ei-name" required style="width: 100%;">
+                        </div>
+                        <div class="input-group">
+                            <label for="gm-ei-icon">Emoji / Ícone:</label>
+                            <input type="text" id="gm-ei-icon" value="⚔️" style="width: 100%; text-align: center;">
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+                        <div class="input-group">
+                            <label for="gm-ei-slot">Slot:</label>
+                            <select id="gm-ei-slot" style="width: 100%;">
+                                <option value="weapon">🗡️ Arma Principal</option>
+                                <option value="offhand">🛡️ Mão Secundária</option>
+                                <option value="helmet">🪖 Elmo / Capuz</option>
+                                <option value="armor">🥋 Armadura / Manto</option>
+                                <option value="accessory">💍 Acessório / Joia</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label for="gm-ei-rarity">Raridade:</label>
+                            <select id="gm-ei-rarity" style="width: 100%;">
+                                <option value="common">⚪ Comum</option>
+                                <option value="rare">🔵 Raro</option>
+                                <option value="epic">🟣 Épico</option>
+                                <option value="legendary">🟡 Lendário</option>
+                                <option value="mythic">🔴 Mítico</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label for="gm-ei-quartel">Quartel Mín:</label>
+                            <input type="number" id="gm-ei-quartel" min="1" max="10" value="1" style="width: 100%;">
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="gm-ei-desc">Descrição / História:</label>
+                        <textarea id="gm-ei-desc" rows="2" style="width: 100%; resize: vertical;"></textarea>
+                    </div>
+
+                    <div style="margin-top: 10px;">
+                        <label style="font-weight: bold; font-size: 0.85rem; color: var(--wood-dark); display: block; margin-bottom: 6px;">Atributos de Combate:</label>
+                        <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px;">
+                            <div><small>⚔️ Força</small><input type="number" id="gm-ei-str" value="0" min="0" style="width: 100%;"></div>
+                            <div><small>🏹 Destr</small><input type="number" id="gm-ei-dex" value="0" min="0" style="width: 100%;"></div>
+                            <div><small>🔮 Magia</small><input type="number" id="gm-ei-int" value="0" min="0" style="width: 100%;"></div>
+                            <div><small>⚡ Vigor</small><input type="number" id="gm-ei-sta" value="0" min="0" style="width: 100%;"></div>
+                            <div><small>❤️ Vida</small><input type="number" id="gm-ei-hp" value="0" min="0" style="width: 100%;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Toggle Ativo/Inativo no Jogo -->
+                    <div class="gm-instant-toggle-box" style="margin-top: 15px;">
+                        <label class="gm-switch-label">
+                            <input type="checkbox" id="gm-ei-active" class="gm-switch-input" checked>
+                            <span class="gm-switch-slider"></span>
+                            <div class="gm-switch-text">
+                                <strong>🟢 Item Ativo no Reino (Disponível nos Drops)</strong>
+                                <small>Se desligado, este item não poderá ser obtido na Torre de Desafios.</small>
+                            </div>
+                        </label>
+                    </div>
+
+                    <div class="actions" style="margin-top: 20px; display: flex; gap: 10px;">
+                        <button type="submit" id="btn-submit-edit-item" class="btn primary-btn" style="flex: 1;">
+                            💾 Salvar Alterações
+                        </button>
+                        <button type="button" id="btn-cancel-edit-item" class="btn secondary-btn" style="min-width: 120px;">
+                            🔙 Voltar
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
 

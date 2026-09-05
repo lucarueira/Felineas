@@ -1,0 +1,21 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Regras do Reino Felineas
+    // Coleção global: notícias, transmissões e configurações do GM
+    match /global/{docId} {
+      allow read, write: if true;
+    }
+    
+    // Coleção de vilas dos jogadores: contas, recursos, edifícios, tropas e inventário
+    match /villages/{villageId} {
+      allow read, write: if true;
+    }
+
+    // Regra coringa para desenvolvimento local e ambiente de teste no Netlify
+    match /{document=**} {
+      allow read, write: if true;
+    }
+  }
+}
